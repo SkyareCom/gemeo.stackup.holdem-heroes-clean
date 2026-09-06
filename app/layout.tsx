@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Doppio_One } from "next/font/google";
 import UppercaseGuard from "@/components/UppercaseGuard";
-import TournamentNoticeTicker from "@/components/TournamentNoticeTicker";
 import "./globals.css";
 import "./button-standard.css";
 import "./scenario-standard.css";
@@ -23,7 +22,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="unified-background">
         <UppercaseGuard />
         {children}
-        <TournamentNoticeTicker />
       </body>
     </html>
   );
