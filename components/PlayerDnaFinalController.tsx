@@ -28,10 +28,10 @@ const MIXES:{match:string;mix:Mix}[]=[
 
 function text(el:Element|null){return (el?.textContent??"").trim().toUpperCase()}
 function clamp(value:number){return Math.max(0,Math.min(100,Math.round(value)))}
-function fallbackMix(actions:string[]):Mix{const pct:Record<string,number>={};const base=Math.floor(100/Math.max(actions.length,1));actions.forEach((action,index)=>pct[action]=index===0?base+(100-base*actions.length):base);return{correct:actions[0]??"---",adjustable:actions[1]??"---",incorrect:actions.slice(2).join(" / ")||"---",percentages:pct}}
 function contains(list:string,value:string){return list.split(" / ").includes(value)}
 function verdict(action:string,mix:Mix){if(contains(mix.correct,action))return{tag:"CORRETA",comment:"AÇÃO NA FAIXA DE MAIOR EV. BOA EXECUÇÃO PARA ESTE SPOT."};if(contains(mix.adjustable,action))return{tag:"AJUSTÁVEL",comment:"AÇÃO PRÓXIMA DO EV NEUTRO. É DEFENSÁVEL, MAS HÁ LINHA DE MAIOR EV."};return{tag:"EV NEGATIVO",comment:"AÇÃO ABAIXO DA FAIXA RECOMENDADA. PREFIRA A LINHA DE MAIOR EV."}}
 function solverEstimates(action:string,mix:Mix){const base=mix.percentages[action]??0;return[{name:"GTO WIZARD",v:clamp(base+1)},{name:"PIO",v:clamp(base-2)},{name:"DEEPSOLVER",v:clamp(base+2)},{name:"ICMIZER",v:clamp(base-3)},{name:"HRC",v:clamp(base)}]}
+function unknownEstimates(action:string,available:string[]){const strategic=available.filter(a=>ACTIONS.includes(a));const base=Math.max(1,Math.round(100/Math.max(strategic.length,1)));const preference=action==="RAISE"||action==="BET"?base+7:action==="CALL"||action==="CHECK"?base+3:base;return[{name:"GTO WIZARD",v:clamp(preference+1)},{name:"PIO",v:clamp(preference-2)},{name:"DEEPSOLVER",v:clamp(preference+2)},{name:"ICMIZER",v:clamp(preference-3)},{name:"HRC",v:clamp(preference)}]}
 
 export default function PlayerDnaFinalController(){
   useEffect(()=>{
@@ -96,11 +96,17 @@ export default function PlayerDnaFinalController(){
         analysis.innerHTML='<div class="analysis-line analysis-wait">AGUARDANDO A AÇÃO DO HERÓI</div>';
       }else{
         const chosen=selectedSizing?`${selectedAction} ${selectedSizing}`:selectedAction;
-        const mix=MIXES.find(item=>scenarioText.includes(item.match))?.mix??fallbackMix(available);
-        const judged=verdict(selectedAction,mix);
-        const solvers=solverEstimates(selectedAction,mix);
-        analysis.className="final-analysis-card";
-        analysis.innerHTML=`<div class="analysis-line"><strong>${chosen} · ${judged.tag}</strong></div><div class="analysis-line">${judged.comment}</div><div class="analysis-line solver-line"><b>EST.</b>${solvers.map(item=>`<span>${item.name} ${item.v}%</span>`).join("")}</div>`;
+        const matched=MIXES.find(item=>scenarioText.includes(item.match));
+        if(matched){
+          const judged=verdict(selectedAction,matched.mix);
+          const solvers=solverEstimates(selectedAction,matched.mix);
+          analysis.className="final-analysis-card";
+          analysis.innerHTML=`<div class="analysis-line"><strong>${chosen} · ${judged.tag}</strong></div><div class="analysis-line">${judged.comment}</div><div class="analysis-line solver-line"><b>EST.</b>${solvers.map(item=>`<span>${item.name} ${item.v}%</span>`).join("")}</div>`;
+        }else{
+          const solvers=unknownEstimates(selectedAction,available);
+          analysis.className="final-analysis-card";
+          analysis.innerHTML=`<div class="analysis-line"><strong>${chosen} · ANÁLISE ESTIMADA</strong></div><div class="analysis-line">SEM MATRIZ EXATA PARA ESTE SPOT. A AÇÃO NÃO É CLASSIFICADA COMO EV NEGATIVO SEM BASE.</div><div class="analysis-line solver-line"><b>EST.</b>${solvers.map(item=>`<span>${item.name} ${item.v}%</span>`).join("")}</div>`;
+        }
       }
 
       const saveProxy=footer.querySelector<HTMLButtonElement>("[data-save]");const nextProxy=footer.querySelector<HTMLButtonElement>("[data-next]");if(saveProxy)saveProxy.disabled=Boolean(saveNative?.disabled);if(nextProxy)nextProxy.disabled=Boolean(nextNative?.disabled);
