@@ -1,0 +1,44 @@
+/* Home typography + module cards. */
+.topbar .brand{
+  font-size:20px!important;
+}
+.hero>.system-gradient{
+  font-size:28px!important;
+}
+.hero h1 .hero-evolve{
+  font-size:28px!important;
+}
+
+/* Home module cards: fixed title area + four-line description area. */
+.modules a{
+  height:168px!important;
+  min-height:168px!important;
+  grid-template-rows:46px 68px!important;
+  align-content:center!important;
+  gap:10px!important;
+  padding:18px!important;
+}
+.modules .module-title{
+  display:block!important;
+  height:46px!important;
+  min-height:46px!important;
+  overflow:hidden!important;
+}
+.modules .module-title span{
+  display:block!important;
+  font-size:18px!important;
+  line-height:23px!important;
+}
+.modules .module-description{
+  display:-webkit-box!important;
+  height:68px!important;
+  min-height:68px!important;
+  max-height:68px!important;
+  overflow:hidden!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:4!important;
+  line-clamp:4!important;
+  font-size:10px!important;
+  line-height:17px!important;
+  text-transform:none!important;
+}

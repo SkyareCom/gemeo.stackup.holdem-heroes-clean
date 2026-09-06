@@ -1,0 +1,99 @@
+/* PADRÃO DOS CARDS SECUNDÁRIOS. CENÁRIO É EXCEÇÃO: RESUMO INLINE SEM CARDS/BORDAS. */
+
+html body [class*="HandReviewWorkspace_metrics"],
+html body [class*="HandReviewWorkspace_summary"],
+html body [class*="MathLabWorkspace_metrics"],
+html body [class*="MathLabWorkspace_context"] {
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+
+html body [class*="HandReviewWorkspace_badge"],
+html body [class*="HandReviewWorkspace_metric"],
+html body [class*="HandReviewWorkspace_summary"] > div,
+html body [class*="MathLabWorkspace_metric"],
+html body [class*="MathLabWorkspace_context"] > span,
+html body .player-dna-page [class*="levelValues"] > div,
+html body .player-dna-page [class*="actionBadge"] {
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  height:38px!important;min-height:38px!important;max-height:38px!important;
+  margin:0!important;padding:0 10px!important;box-sizing:border-box!important;overflow:hidden!important;
+  border:1px solid #255000!important;border-radius:12px!important;background:rgba(0,100,20,.07)!important;
+  color:#009929!important;-webkit-text-fill-color:#009929!important;font-size:12px!important;font-weight:400!important;
+  line-height:1!important;text-align:center!important;white-space:normal!important;box-shadow:none!important;
+}
+
+/* PLAYER DNA — CENÁRIO: ITEM / ITEM / ITEM / ITEM ... */
+html body .player-dna-page .training-session [class*="PlayerDnaWorkspace_scenario"] {
+  display:flex!important;
+  flex-flow:row wrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:0!important;
+  width:100%!important;
+  margin:0!important;
+  padding:2px 0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+html body .player-dna-page .training-session [class*="PlayerDnaWorkspace_scenario"] > [class*="PlayerDnaWorkspace_badge"] {
+  display:inline!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  color:#ede6db!important;
+  -webkit-text-fill-color:#ede6db!important;
+  font-size:12px!important;
+  font-weight:400!important;
+  line-height:1.65!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+}
+
+html body .player-dna-page .training-session [class*="PlayerDnaWorkspace_scenario"] > [class*="PlayerDnaWorkspace_badge"]:not(:last-child)::after {
+  content:" / "!important;
+  display:inline!important;
+  padding:0 6px!important;
+  color:#009929!important;
+  -webkit-text-fill-color:#009929!important;
+  background:transparent!important;
+}
+
+html body .player-dna-page .training-session [class*="PlayerDnaWorkspace_scenario"] > [class*="PlayerDnaWorkspace_badge"]::before {
+  content:none!important;
+  display:none!important;
+}
+
+/* CARDS PRINCIPAIS: EXCEÇÃO, SEM ALTERAÇÃO. */
+html body .modules > a,
+html body .saved-analysis-panel,
+html body .history-panel,
+html body .player-dna-page .training-session > section,
+html body [class*="HandReviewWorkspace_step"],
+html body [class*="HandReviewWorkspace_section"],
+html body [class*="HandReviewWorkspace_analysisCard"],
+html body [class*="HandReviewWorkspace_verdict"],
+html body [class*="MathLabWorkspace_explanation"],
+html body [class*="MathLabWorkspace_problem"],
+html body [class*="MathLabWorkspace_trainingInfo"],
+html body [class*="MathLabWorkspace_card"],
+html body [class*="PokerAssistantWorkspace_composer"],
+html body [class*="PokerAssistantWorkspace_answer"] {}

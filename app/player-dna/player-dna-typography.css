@@ -1,0 +1,143 @@
+.player-dna-page{
+  --pd-bg:#030806;
+  --pd-surface:#0a1710;
+  --pd-border:#255000;
+  --pd-offwhite:#ede6db;
+  --pd-green:#009929;
+  --pd-white:#ffffff;
+  --pd-silver:#c0c0c0;
+}
+
+/* PLAYER DNA screen hierarchy: only 16px and 12px. */
+html body main.player-dna-page,
+html body main.player-dna-page *{
+  font-family:var(--font-doppio-one),"Doppio One",sans-serif!important;
+  font-size:12px!important;
+  font-weight:400!important;
+  color:var(--pd-silver)!important;
+  -webkit-text-fill-color:var(--pd-silver)!important;
+  text-transform:uppercase!important;
+}
+html body main.player-dna-page{background:var(--pd-bg)!important}
+
+/* ALL VISIBLE PLAYER DNA COPY IS UPPERCASE. */
+html body main.player-dna-page p,
+html body main.player-dna-page small,
+html body main.player-dna-page label,
+html body main.player-dna-page strong,
+html body main.player-dna-page span,
+html body main.player-dna-page input,
+html body main.player-dna-page textarea,
+html body main.player-dna-page select,
+html body main.player-dna-page option{
+  text-transform:uppercase!important;
+}
+
+/* Titles and subtitles: always uppercase and #EDE6DB. */
+html body main.player-dna-page h1,
+html body main.player-dna-page h2,
+html body main.player-dna-page h3,
+html body main.player-dna-page h4,
+html body main.player-dna-page .eyebrow,
+html body main.player-dna-page .tag,
+html body main.player-dna-page [class*="blockTitle"],
+html body main.player-dna-page section.panel.profile-panel .saved-analysis-title,
+html body main.player-dna-page section.panel.profile-panel .history-eyebrow,
+html body main.player-dna-page section.panel.profile-panel .history-panel::before{
+  color:var(--pd-offwhite)!important;
+  -webkit-text-fill-color:var(--pd-offwhite)!important;
+  text-transform:uppercase!important;
+}
+
+/* Primary hierarchy titles use 16px. */
+html body main.player-dna-page section.panel.profile-panel > div > div:first-child > div.eyebrow,
+html body main.player-dna-page section.panel.profile-panel h2,
+html body main.player-dna-page section.panel.profile-panel .saved-analysis-title,
+html body main.player-dna-page section.panel.profile-panel .history-eyebrow,
+html body main.player-dna-page section.panel.profile-panel .history-panel::before{
+  font-size:16px!important;
+  line-height:18px!important;
+}
+
+.player-dna-page .history-panel{position:relative!important;display:grid!important}
+.player-dna-page .history-panel>div:first-child{order:1!important}
+html body main.player-dna-page section.panel.profile-panel .history-panel::before{
+  content:"RELATÓRIOS"!important;
+  display:block!important;
+  order:2!important;
+  margin:0!important;
+  padding:0!important;
+  min-height:18px!important;
+}
+.player-dna-page .history-panel>button{order:3!important}
+.player-dna-page .history-panel>div:not(:first-child){order:4!important}
+
+/* Remove the random-mode explanatory note from the setup screen. */
+html body main.player-dna-page .analysis-balance-note{display:none!important}
+
+/* Progress/counters — #009929 / 12px. */
+html body main.player-dna-page .saved-analysis-status,
+html body main.player-dna-page .saved-analysis-status span,
+html body main.player-dna-page .history-count,
+html body main.player-dna-page .training-session [class*="progressHead"] span,
+html body main.player-dna-page .training-session [class*="progressHead"] strong{
+  color:var(--pd-green)!important;
+  -webkit-text-fill-color:var(--pd-green)!important;
+  font-size:12px!important;
+  text-transform:uppercase!important;
+}
+
+/* Button rule: always uppercase and #009929. */
+html body main.player-dna-page button,
+html body main.player-dna-page button *,
+html body main.player-dna-page a.module-back,
+html body main.player-dna-page a.module-back *{
+  color:var(--pd-green)!important;
+  -webkit-text-fill-color:var(--pd-green)!important;
+  font-size:12px!important;
+  text-transform:uppercase!important;
+}
+
+/* Spot numerals are the explicit button exception: white / 16px. */
+html body main.player-dna-page section.panel.profile-panel .depth-choices>button>strong{
+  color:var(--pd-white)!important;
+  -webkit-text-fill-color:var(--pd-white)!important;
+  font-size:16px!important;
+  line-height:18px!important;
+  text-transform:uppercase!important;
+}
+html body main.player-dna-page section.panel.profile-panel .depth-choices>button>span{
+  color:var(--pd-green)!important;
+  -webkit-text-fill-color:var(--pd-green)!important;
+  font-size:12px!important;
+  text-transform:uppercase!important;
+}
+
+/* Remaining reading text is silver / 12px. */
+html body main.player-dna-page .setup-intro,
+html body main.player-dna-page .saved-analysis-description,
+html body main.player-dna-page .history-description,
+html body main.player-dna-page [class*="levelNumber"],
+html body main.player-dna-page [class*="levelSummary"],
+html body main.player-dna-page [class*="badge"],
+html body main.player-dna-page [class*="Badge"]{
+  color:var(--pd-silver)!important;
+  -webkit-text-fill-color:var(--pd-silver)!important;
+  font-size:12px!important;
+  text-transform:uppercase!important;
+}
+
+/* Preserve the existing green surface/border system. */
+html body main.player-dna-page .profile-panel,
+html body main.player-dna-page .saved-analysis-panel,
+html body main.player-dna-page .history-panel,
+html body main.player-dna-page [class*="levelCard"],
+html body main.player-dna-page [class*="actionsCard"],
+html body main.player-dna-page [class*="heroContent"],
+html body main.player-dna-page [class*="levelSummary"]{background:var(--pd-surface)!important;border-color:var(--pd-border)!important}
+html body main.player-dna-page [class*="track"]{background:var(--pd-surface)!important}
+html body main.player-dna-page [class*="track"] i{background:var(--pd-green)!important}
+
+.player-dna-page .mode-choices{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.player-dna-page nav.module-navigation.player-dna-navigation{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-items:stretch!important;align-self:stretch!important;justify-self:stretch!important;width:100%!important;max-width:100%!important;min-width:0!important;gap:8px!important;margin:0 0 18px!important;padding:0!important;box-sizing:border-box!important;transform:none!important}
+.player-dna-page nav.module-navigation.player-dna-navigation .player-dna-nav-button{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;max-width:100%!important;min-width:0!important;height:38px!important;min-height:38px!important;max-height:38px!important;padding:0 8px!important;margin:0!important;box-sizing:border-box!important;text-align:center!important;text-transform:uppercase!important}

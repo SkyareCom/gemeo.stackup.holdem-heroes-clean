@@ -1,0 +1,62 @@
+/* PLAYER DNA — CENÁRIO COMPACTO REAL, SEM DEPENDER DE NOMES HASH DE CSS MODULES */
+.player-dna-page .training-session > section:last-child {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 8px 0 0 !important;
+  box-shadow: none !important;
+}
+
+.player-dna-page .training-session > section:last-child > h4 {
+  margin: 0 0 6px !important;
+}
+
+.player-dna-page .training-session > section:last-child > div {
+  display: flex !important;
+  flex-flow: row wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.player-dna-page .training-session > section:last-child > div > span {
+  display: inline !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #ede6db !important;
+  -webkit-text-fill-color: #ede6db !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.65 !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+.player-dna-page .training-session > section:last-child > div > span::before {
+  content: none !important;
+  display: none !important;
+}
+
+.player-dna-page .training-session > section:last-child > div > span:not(:last-child)::after {
+  content: " / " !important;
+  display: inline !important;
+  padding: 0 6px !important;
+  color: #009929 !important;
+  -webkit-text-fill-color: #009929 !important;
+}

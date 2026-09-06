@@ -1,0 +1,970 @@
+@import "tailwindcss";
+
+*,*::before,*::after{font-size:14px!important;font-weight:400!important;font-style:normal!important;letter-spacing:.02em!important;text-transform:uppercase!important}
+html body *:not(#stackup-border-override),html body *::before,html body *::after{border-color:#255000!important}
+html,body{background:#030806!important}
+html body *:not(.status):not(.system-gradient){background-color:transparent!important;background-image:none!important}
+html body *::before,html body *::after{background-color:transparent!important;background-image:none!important}
+
+:root{
+  --type-deep:#006414;
+  --type-action:#009929;
+  --type-support:#5ccb5f;
+  --type-highlight:#98ff96;
+  --type-reading:#ede6db;
+  --type-muted:#ffffff;
+}
+
+/* Tela 3 — tamanho definitivo da pergunta de ação. */
+html body main.player-dna-page section.profile-panel .training-session p[class*="prompt"]{
+  font-size:18px!important;
+}
+body,input,textarea,select{color:var(--type-reading)!important}
+h1,h2,h3,h4,h5,h6,.brand,strong,b{color:var(--type-highlight)!important}
+p,li,td,th,textarea{color:var(--type-reading)!important}
+input::placeholder,textarea::placeholder,.status,small{color:var(--type-muted)!important}
+label,.eyebrow,.tag{color:var(--type-action)!important}
+a,button{color:var(--type-support)!important}
+button.active,.primary,.concept-layout aside button.active{color:var(--type-deep)!important}
+
+.brand{color:#ede6db!important}
+.status,.hero>p{font-size:22px!important;background:linear-gradient(135deg,#ede6db 0%,#98ff96 20%,#5ccb5f 40%,#009929 60%,#006414 80%,#d0fdd7 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent}
+.hero>.system-gradient{display:inline-block!important;width:max-content!important;max-width:100%!important;font-size:24px!important;background-image:linear-gradient(145deg,#ede6db 0%,#d0fdd7 16%,#98ff96 32%,#5ccb5f 49%,#009929 65%,#006414 80%,#255000 91%,#001a06 100%)!important}
+.hero h1,.hero h1 em{font-size:18px!important}.hero h1{color:#ede6db!important;line-height:1.25!important;margin-top:4px!important}.hero h1 em{color:#009929!important}.hero h1 .hero-lead,.hero h1 .hero-lead em{font-size:16px!important}.hero h1 .hero-lead,.hero h1 .hero-evolve{color:#ede6db!important}.hero h1 .hero-evolve{font-size:20px!important}.hero>.system-gradient{margin-bottom:0!important}
+.modules{grid-template-columns:repeat(2,minmax(0,1fr))!important}.modules button,.modules a{color:#ede6db!important;border-color:#255000!important}.modules button small{color:#ede6db!important}.modules a{min-height:132px;display:grid;grid-template-rows:42px minmax(52px,auto);align-content:center;align-items:start;gap:10px;padding:18px;border:1px solid;text-decoration:none}.module-title,.module-title span{color:#ede6db!important;font-size:18px!important}.module-title{display:block;min-height:42px}.module-title span{display:block;line-height:1.15!important}.module-description{display:block;min-height:52px;color:#009929!important;font-size:12px!important;line-height:1.45!important}.module-page{padding-top:28px}.module-back{display:inline-flex;margin-bottom:18px;color:#ede6db!important;text-decoration:none;border:1px solid #255000;padding:10px 14px}
+.module-navigation{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.module-navigation .module-back{min-height:34px!important;padding:7px 10px!important;background-color:rgba(0,100,20,.07)!important;font-size:12px!important}
+.player-dna-page .module-navigation{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:auto!important;margin-left:18px!important;margin-right:18px!important;gap:8px!important}
+.player-dna-page .module-navigation .module-back{width:100%!important;margin-bottom:18px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1!important;padding-top:7px!important;padding-bottom:3px!important}
+.modules a:nth-child(1){grid-column:1;grid-row:1}.modules a:nth-child(2){grid-column:2;grid-row:1}.modules a:nth-child(3){grid-column:1;grid-row:2}.modules a:nth-child(4){grid-column:2;grid-row:2}
+html body .modules a:not(#module-card-surface){background-color:rgba(31,54,31,.2)!important;border-color:#255000!important;-webkit-backdrop-filter:blur(12px) saturate(120%)!important;backdrop-filter:blur(12px) saturate(120%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;transition:border-color .15s ease!important}
+html body .modules a:not(#module-card-surface):hover,html body .modules a:not(#module-card-surface):focus-visible,html body .modules a:not(#module-card-surface):active{border-color:#ede6db!important}
+
+/* PLAYER DNA — herda o padrão visual congelado da página inicial. */
+html body .player-dna-page .module-back:not(#player-dna-surface),html body .player-dna-page button:not(#player-dna-surface),html body .player-dna-page .mode-choices>label:not(#player-dna-surface){background-color:rgba(0,100,20,.07)!important;border-color:#255000!important;transition:border-color .15s ease!important}
+html body .player-dna-page .module-back:not(#player-dna-surface):hover,html body .player-dna-page .module-back:not(#player-dna-surface):focus-visible,html body .player-dna-page button:not(#player-dna-surface):hover,html body .player-dna-page button:not(#player-dna-surface):focus-visible,html body .player-dna-page button:not(#player-dna-surface):active,html body .player-dna-page button[aria-pressed="true"]:not(#player-dna-surface),html body .player-dna-page .mode-choices>label:not(#player-dna-surface):has(input:checked){border-color:#ede6db!important}
+html body .player-dna-page .mode-choices>label:has(input:checked){box-shadow:inset 0 0 0 1px #ede6db!important}
+html body .player-dna-page .profile-panel{background-color:transparent!important;border-color:#255000!important}
+html body .player-dna-page .profile-panel .eyebrow{color:#ede6db!important;font-size:18px!important;line-height:1.15!important}
+html body .player-dna-page .profile-panel h2{color:#009929!important;font-size:16px!important;line-height:1.25!important;margin:3px 0 5px!important}
+html body .player-dna-page .setup-intro{color:#ffffff!important;font-size:12px!important;line-height:1.45!important;margin:0!important}
+html body .player-dna-page .setup-intro{color:#c0c0c0!important;font-weight:500!important}
+html body .player-dna-page .profile-panel .setup-intro:not(#silver-description){color:#c0c0c0!important;-webkit-text-fill-color:#c0c0c0!important;font-weight:500!important;opacity:1!important}
+html body .player-dna-page .mode-choices strong,html body .player-dna-page .depth-choices strong{color:#ede6db!important;font-size:18px!important;line-height:1.15!important}
+html body .player-dna-page .depth-choices strong{color:#ffffff!important}
+html body .player-dna-page .mode-choices small,html body .player-dna-page .depth-choices span{color:#009929!important;font-size:12px!important;line-height:1.45!important}
+html body .player-dna-page .mode-choices>label,html body .player-dna-page .depth-choices>button{min-height:88px!important;display:grid!important;grid-template-rows:22px 18px!important;align-content:center!important;align-items:start!important;gap:6px!important;text-align:left!important}
+html body .player-dna-page .mode-choices>label>strong,html body .player-dna-page .depth-choices>button>strong{display:block!important;min-height:22px!important;margin:0!important}
+html body .player-dna-page .depth-choices>button>span{display:block!important;min-height:18px!important;margin:0!important}
+html body .player-dna-page .mode-choices>label{min-height:72px!important;grid-template-rows:22px!important;padding:16px!important;cursor:pointer}.mode-choices>label>input{position:absolute!important;opacity:0!important;pointer-events:none!important}
+html body .player-dna-page .mode-choices>label{height:40px!important;min-height:40px!important;padding:5px 8px!important;grid-template-rows:auto!important}
+html body .player-dna-page .mode-choices>label>strong{font-size:12px!important;line-height:1!important;min-height:0!important}
+html body .player-dna-page .depth-choices>button{min-height:64px!important;padding:8px 10px!important;gap:2px!important}
+html body .player-dna-page .history-panel{height:160px!important;padding:14px!important;gap:8px!important;background-color:rgba(0,100,20,.035)!important;border-color:#255000!important}html body .player-dna-page .history-panel:has(button[aria-expanded="true"]){height:auto!important;min-height:160px!important}
+html body .player-dna-page .saved-analysis-panel{height:160px!important;padding:14px!important;gap:6px!important;background-color:rgba(0,100,20,.035)!important;border-color:#255000!important}.saved-analysis-title{color:#ede6db!important;font-size:18px!important}.saved-analysis-status{color:#009929!important;font-size:16px!important}.saved-analysis-description{color:#ffffff!important;font-size:12px!important;line-height:1.3!important}html body .player-dna-page .saved-analysis-panel .primary{min-height:28px!important;padding:4px 8px!important;border:1px solid #255000!important;color:#006414!important;font-size:12px!important;white-space:nowrap!important}
+html body .player-dna-page .saved-analysis-panel .primary{width:calc(50% - 4px)!important;flex:0 0 calc(50% - 4px)!important;min-height:30px!important;padding:5px 8px!important;font-size:12px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:1!important}
+.player-dna-page .saved-analysis-status span{color:#009929!important;font-size:16px!important}
+
+html body .player-dna-page .history-eyebrow{color:#ede6db!important;font-size:18px!important}
+html body .player-dna-page .history-count{color:#009929!important;font-size:16px!important}
+html body .player-dna-page .history-description{color:#ffffff!important;font-size:12px!important;line-height:1.45!important}
+html body .player-dna-page .history-panel>div+div>small{color:#ffffff!important;font-size:12px!important;opacity:1!important}
+
+/* PLAYER DNA — tela de treino. A configuração congelada acima não é alterada. */
+html body .player-dna-page .training-session{gap:10px!important}
+html body .player-dna-page .training-session>section{padding:14px!important;background-color:rgba(0,100,20,.035)!important;border:1px solid #255000!important}
+html body .player-dna-page .training-session>section h4{margin:0 0 10px!important;color:#ede6db!important;font-size:18px!important;line-height:1.15!important}
+html body .player-dna-page .training-session [class*="progressHead"] span,html body .player-dna-page .training-session [class*="progressHead"] strong{color:#009929!important;font-size:12px!important}
+html body .player-dna-page .training-session [class*="boardRow"],html body .player-dna-page .training-session [class*="potRow"],html body .player-dna-page .training-session [class*="playerRow"]{background-color:rgba(0,100,20,.025)!important;border-color:#255000!important}
+html body .player-dna-page .training-session [class*="label"]{color:#009929!important;font-size:12px!important;line-height:1.3!important}
+html body .player-dna-page .training-session [class*="value"],html body .player-dna-page .training-session [class*="potValue"]{color:#ede6db!important;font-size:14px!important}
+html body .player-dna-page .training-session [class*="participants"]{color:#ffffff!important;font-size:12px!important}
+html body .player-dna-page .training-session [class*="badge"]{color:#009929!important;font-size:12px!important;border-color:#255000!important}
+html body .player-dna-page .training-session [class*="card"]{color:#ede6db!important;font-size:14px!important;background-color:rgba(0,100,20,.07)!important;border-color:#255000!important}
+html body .player-dna-page .training-session [class*="prompt"]{margin:4px 0!important;color:#009929!important;font-size:18px!important;line-height:1.25!important}
+html body .player-dna-page .training-session [class*="actions"] button{min-height:44px!important;padding:8px 10px!important;color:#ede6db!important;font-size:14px!important;background-color:rgba(0,100,20,.07)!important;border-color:#255000!important}
+html body .player-dna-page .training-session [class*="actions"] button[aria-pressed="true"]{border-color:#ede6db!important;box-shadow:inset 0 0 0 1px #ede6db!important}
+html body .player-dna-page .training-footer button{min-height:34px!important;padding:7px 10px!important;font-size:12px!important;border-color:#255000!important}
+html body .player-dna-page .training-footer button strong{font-size:12px!important}
+html body .player-dna-page .training-footer>button:not(#training-footer-control){min-height:30px!important;padding:5px 8px!important;color:#009929!important;border:1px solid #009929!important;font-size:12px!important;line-height:1.2!important;opacity:1!important;background-color:rgba(0,100,20,.07)!important}
+html body .player-dna-page .training-footer>button:not(#training-footer-control)>strong{color:#009929!important;font-size:12px!important}
+html body .player-dna-page .training-footer>button:not(#training-footer-control):hover,html body .player-dna-page .training-footer>button:not(#training-footer-control):focus-visible,html body .player-dna-page .training-footer>button:not(#training-footer-control):active{border-color:#ede6db!important;box-shadow:inset 0 0 0 1px #ede6db!important}
+
+/* Cabeçalho único dos dados dos jogadores na tela de treino. */
+.player-dna-page .players-header{display:grid!important;grid-template-columns:minmax(60px,.8fr) minmax(78px,1.05fr) minmax(72px,.9fr) minmax(86px,1.2fr) minmax(72px,.9fr)!important;gap:9px!important;align-items:center!important;min-height:44px!important;margin:0 0 8px!important;padding:11px 12px!important;background:rgba(0,100,20,.12)!important;border:1px solid #255000!important;border-radius:12px!important;box-shadow:inset 0 0 0 1px rgba(37,80,0,.22)!important;color:#009929!important;font-size:12px!important;line-height:1.2!important}
+.player-dna-page .players-header span{display:block!important;min-width:0!important;color:#009929!important;font-size:12px!important}
+@media(max-width:800px){.player-dna-page .players-header{grid-template-columns:minmax(52px,.8fr) minmax(66px,1fr) minmax(58px,.82fr) minmax(68px,1fr) minmax(58px,.82fr)!important;gap:6px!important;min-height:42px!important;padding:10px 8px!important;font-size:12px!important}}
+
+
+/* Controles compactos e badges compartilhados. */
+html body .module-navigation .module-back:not(#compact-control),html body .player-dna-page .saved-analysis-panel .primary:not(#compact-control),html body .player-dna-page .history-actions .history-action:not(#compact-control),html body .player-dna-page .training-session [class*="actions"] button:not(#compact-control),html body .player-dna-page .training-footer button:not(#compact-control),html body .player-dna-page .training-session [class*="badge"]:not(#compact-control){min-height:30px!important;padding:5px 8px!important;color:#009929!important;border:1px solid #009929!important;font-size:12px!important;line-height:1.2!important}
+html body .player-dna-page .history-actions .history-action strong,html body .player-dna-page .training-footer button strong{color:#009929!important;font-size:12px!important}
+html body .module-navigation .module-back:not(#compact-control):hover,html body .module-navigation .module-back:not(#compact-control):focus-visible,html body .module-navigation .module-back:not(#compact-control):active,html body .player-dna-page .saved-analysis-panel .primary:not(#compact-control):hover,html body .player-dna-page .saved-analysis-panel .primary:not(#compact-control):focus-visible,html body .player-dna-page .history-actions .history-action:not(#compact-control):hover,html body .player-dna-page .history-actions .history-action:not(#compact-control):focus-visible,html body .player-dna-page .training-session [class*="actions"] button:not(#compact-control):hover,html body .player-dna-page .training-session [class*="actions"] button:not(#compact-control):focus-visible,html body .player-dna-page .training-session [class*="actions"] button[aria-pressed="true"]:not(#compact-control),html body .player-dna-page .training-footer button:not(#compact-control):hover,html body .player-dna-page .training-footer button:not(#compact-control):focus-visible,html body .player-dna-page .training-footer button:not(#compact-control):active{border-color:#ede6db!important;box-shadow:inset 0 0 0 1px #ede6db!important}
+
+/* Cantos consistentes em quadros, controles e superfícies interativas. */
+html body *:not(.poker-table):not([class*="badge"]):not([class*="card"]):not([class*="closed"]):not([class*="track"]):not([class*="progress"]):not(i){border-radius:12px!important}
+.profile-panel .eyebrow{color:#ede6db!important}.profile-panel h2{color:#5ccb5f!important}
+.profile-panel button{border-color:#255000!important}.profile-panel{border-color:#255000!important}
+.player-dna-page .profile-panel,.player-dna-page .saved-analysis-panel,.player-dna-page .history-panel{border:none!important;box-shadow:none!important}
+.player-dna-page .profile-panel,.player-dna-page .profile-panel *{text-align:left!important}
+.player-dna-page .profile-panel>[class*="setup"]{gap:18px!important}
+.player-dna-page .profile-panel>[class*="setup"]>div:first-child{display:grid!important;gap:6px!important}
+.player-dna-page .profile-panel .eyebrow,.player-dna-page .profile-panel h2,.player-dna-page .profile-panel p,.player-dna-page .saved-analysis-panel strong,.player-dna-page .saved-analysis-panel small,.player-dna-page .history-panel strong,.player-dna-page .history-panel small{margin-left:0!important;margin-right:0!important}
+.player-dna-page .mode-choices,.player-dna-page .depth-choices{gap:8px!important}
+.player-dna-page .mode-choices>label,.player-dna-page .depth-choices>button{justify-items:start!important;justify-content:start!important}
+html body .player-dna-page .saved-analysis-panel,html body .player-dna-page .history-panel{gap:10px!important;padding-left:0!important;padding-right:0!important}
+.player-dna-page .saved-analysis-panel>div:first-child,.player-dna-page .history-panel>div:first-child{align-items:flex-start!important;justify-content:flex-start!important}
+.player-dna-page .saved-analysis-panel button,.player-dna-page .history-panel button{justify-content:center!important;text-align:center!important}
+.player-dna-page button,.player-dna-page .module-back,.player-dna-page .mode-choices>label{justify-content:center!important;justify-items:center!important;text-align:center!important}
+.setup-intro{color:#ffffff!important}.history-panel{border-color:#255000!important}.history-eyebrow{color:#ede6db!important}.history-count{color:#5ccb5f!important}.history-description{color:#ffffff!important}.history-action,.history-action strong{color:#006414!important}
+html body .profile-panel .setup-intro,html body .profile-panel .history-description{color:rgb(255 255 255)!important;-webkit-text-fill-color:rgb(255 255 255)!important;opacity:1!important;filter:none!important}
+.history-actions{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}.history-actions .history-action{min-height:30px!important;padding:5px 8px!important;white-space:nowrap}.history-actions .history-action,.history-actions .history-action strong{font-size:12px!important}
+.player-dna-page .history-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important;gap:8px!important}
+.player-dna-page .history-actions .history-action{width:100%!important;min-width:0!important;justify-content:center!important;text-align:center!important}
+.mode-choices strong,.depth-choices strong{color:#ede6db!important}.mode-choices small,.depth-choices span{color:#5ccb5f!important}
+input,textarea,select{border-color:#255000!important}
+
+:root{--font-goldman:var(--font-changa)}
+
+:root{--bg:#030806;--panel:#07110c;--panel2:#0a1710;--line:#183426;--line2:#245239;--green:#67d992;--green-strong:#8cf0b2;--green-deep:#174a31;--muted:#82a08e;--text:#edf7f0}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:radial-gradient(circle at 50% -10%,#123321 0,#030806 38%);color:var(--text);font-family:var(--font-goldman),sans-serif}button,input,textarea{font:inherit}button{cursor:pointer}main{max-width:1280px;margin:auto;padding:0 28px 80px}.topbar{height:76px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);font-size:14px;letter-spacing:1px}.brand{color:#edf7f0;font-weight:700}.status{color:#5f9675;font-size:10px}.hero{padding:68px 0 46px}.hero p,.eyebrow{color:var(--green-strong);font-size:clamp(20px,3.4vw,44px);line-height:1.02;letter-spacing:1px;font-weight:700;margin:0 0 20px}.eyebrow{font-size:10px;letter-spacing:3px}.hero h1{font-size:clamp(42px,7vw,86px);line-height:.91;letter-spacing:-3px;margin:15px 0 0;max-width:950px}.hero em{color:var(--green);font-style:normal}.modules{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:28px}.modules button{min-height:88px;text-align:left;padding:16px;background:#07100b;border:1px solid var(--line);color:#b7cebf;font-weight:700}.modules small{display:block;color:#56816a;font-size:8px;letter-spacing:1.5px;margin-bottom:9px}.modules button.active{border-color:var(--green);color:#edf7f0;background:#0b1b12;box-shadow:0 0 0 1px #1d5637 inset}.modules button.active small{color:var(--green-strong)}.panel,.math-shell{border:1px solid var(--line);background:rgba(6,14,9,.96);padding:30px}.panel h2,.section-head h2{margin:7px 0 22px;font-size:30px}.panel p{color:#a7c0b0;max-width:760px;line-height:1.6}.spot-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:28px 0}.spot-grid button{background:#0b1710;color:#edf7f0;border:1px solid var(--line);padding:25px 8px}.spot-grid button:hover{border-color:var(--green);background:#102619}.spot-grid strong{display:block;font-size:30px;color:var(--green-strong)}.spot-grid span{font-size:9px;letter-spacing:2px}.coming{margin-top:18px;padding:14px;border-left:2px solid #346a4a;color:#739c84;font-size:12px}textarea{width:100%;min-height:120px;background:#050c08;border:1px solid var(--line);color:#edf7f0;padding:16px;margin:16px 0;resize:vertical}.primary,.voice{border:0;background:var(--green);color:#031008;padding:14px 20px;font-weight:700;font-size:11px;letter-spacing:1px}.primary:hover{background:var(--green-strong)}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;border-bottom:1px solid var(--line);margin-bottom:26px}.math-tabs{display:flex;gap:4px}.math-tabs button{background:transparent;color:#73907e;border:0;border-bottom:2px solid transparent;padding:16px 14px;font-size:10px;font-weight:700}.math-tabs button.active{color:var(--green-strong);border-color:var(--green)}.concept-layout{display:grid;grid-template-columns:230px 1fr;gap:28px}.concept-layout aside{display:grid;align-content:start;grid-template-columns:1fr 1fr;gap:6px}.concept-layout aside button{background:#07100b;color:#7f9d89;border:1px solid var(--line);padding:11px 8px;font-size:9px;font-weight:700}.concept-layout aside button.active{color:#031008;background:var(--green);border-color:var(--green)}.explanation{max-width:760px}.tag{display:inline-block;color:var(--green-strong);border:1px solid #28593e;padding:5px 8px;font-size:8px;font-weight:700;letter-spacing:1px}.explanation h3,.practice h3,.doubt-card h3,.dna-question h3,.dna-result h3{font-size:34px;margin:12px 0 25px}.info{border-top:1px solid #142b1e;padding:14px 0}.info b{color:var(--green-strong);font-size:9px;letter-spacing:1.5px}.info p{color:#bad1c2;line-height:1.55;margin:7px 0}.voice{margin-top:15px;background:#0f2016;color:var(--green-strong);border:1px solid #28593e}.practice{display:grid;grid-template-columns:1.35fr .65fr;gap:28px}.table-wrap{padding:18px 0}.poker-table{height:260px;max-width:620px;margin:auto;border:8px solid #142c1e;border-radius:50%;background:radial-gradient(ellipse,#164a2c,#082015);position:relative;box-shadow:inset 0 0 0 1px #34724d}.seat{position:absolute;background:#06100a;border:1px solid #315f43;padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:1px}.seat.top{top:-12px;left:50%;transform:translateX(-50%)}.seat.bottom{bottom:-12px;left:50%;transform:translateX(-50%);color:var(--green-strong)}.board{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;gap:5px}.board b,.board i{display:grid;place-items:center;width:42px;height:58px;background:#dcefe2;color:#0b1b12;border-radius:4px;font-size:15px;font-style:normal}.board i{background:#12281b;color:#6b9d7d;border:1px dashed #4b805f}.pot{position:absolute;left:50%;top:28%;transform:translateX(-50%);font-size:9px;color:#86aa92}.pot strong{color:#edf7f0}.scenario{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.scenario span{border:1px solid var(--line);padding:12px;color:#789581;font-size:9px}.scenario b{display:block;color:#edf7f0;font-size:20px;margin-top:5px}.question{border-left:1px solid var(--line);padding:35px 0 0 28px}.question p{font-size:20px;line-height:1.4}.answer{display:flex;align-items:center;border-bottom:1px solid #4b805f;margin:25px 0}.answer input{width:100%;background:transparent;border:0;outline:0;color:#edf7f0;font-size:52px;font-weight:700}.answer b{color:var(--green-strong);font-size:28px}.feedback{margin-top:20px;padding:16px;border:1px solid}.feedback p,.feedback small{line-height:1.5;color:#b7cebf}.feedback.ok{border-color:#3f8559}.feedback.ok strong{color:var(--green-strong)}.feedback.bad{border-color:#4b6f59}.feedback.bad strong{color:#9ed9b4}.doubts{display:grid;grid-template-columns:1fr 1fr;gap:18px}.doubt-card{border:1px solid var(--line);padding:22px}.calc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.calc-grid label{color:#789581;font-size:9px}.calc-grid input{display:block;width:100%;margin-top:6px;background:#050c08;color:#edf7f0;border:1px solid var(--line);padding:12px}.metrics,.dna-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:18px}.metrics{grid-template-columns:repeat(3,1fr)}.metric{background:#0b1810;padding:15px;border:1px solid var(--line)}.metric small{display:block;color:#73907e;font-size:8px}.metric strong{display:block;color:var(--green-strong);font-size:24px;margin-top:5px}.exact{display:block;color:#75a883;margin-top:15px}.panel>.table-wrap{max-width:700px}
+.spot-structure{display:grid;grid-template-columns:1.25fr .72fr 1fr;gap:12px;margin:22px 0}.spot-block{background:#07130d;border:1px solid var(--line);padding:14px}.spot-block h4{margin:0 0 10px;color:var(--green-strong);font-size:10px;letter-spacing:1.5px}.spot-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 0;border-top:1px solid #122b1d}.spot-row:first-of-type{border-top:0}.spot-row span{color:#72907c;font-size:8px}.spot-row strong{display:block;color:#edf7f0;font-size:12px;margin-top:5px}.pot-grid,.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.data-box,.board-line{background:#0a1b12;border:1px solid #153a27;padding:11px}.data-box small,.board-line small{display:block;color:#72907c;font-size:8px;margin-bottom:5px}.data-box b,.board-line b{color:#edf7f0;font-size:13px}.board-line{margin-top:8px}.dna-progress{display:flex;justify-content:space-between;align-items:center;color:#789b84;font-size:9px}.dna-progress strong{color:var(--green-strong);font-size:16px}.progress-track{height:5px;background:#0b1a11;margin:10px 0 18px;overflow:hidden}.progress-track i{display:block;height:100%;background:var(--green);transition:width .2s ease}.dna-question{border-top:1px solid var(--line);padding-top:22px}.action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.action-grid button{padding:18px;background:#0a1a11;color:#dff2e5;border:1px solid #24543a;font-weight:700}.action-grid button:hover{border-color:var(--green-strong);background:#10291a}.result-head{display:flex;justify-content:space-between;gap:20px;align-items:start}.confidence{min-width:130px;border:1px solid #24543a;padding:16px;text-align:center;background:#0a1b12}.confidence small{display:block;color:#71927d;font-size:8px}.confidence strong{display:block;color:var(--green-strong);font-size:28px;margin-top:6px}.dna-insights{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 22px}.dna-insights>div{border:1px solid var(--line);padding:16px;background:#07130d}.dna-insights b{color:var(--green-strong);font-size:9px;letter-spacing:1px}.dna-insights p{font-size:12px;color:#a8c3b0;line-height:1.45;margin:10px 0}
+@media(max-width:800px){main{padding:0 14px 50px}.topbar{height:60px}.status{display:none}.hero{padding:38px 0 30px}.hero h1{font-size:44px;letter-spacing:-2px}.hero p{font-size:28px}.modules{grid-template-columns:1fr 1fr}.modules button{min-height:72px;padding:12px;font-size:11px}.panel,.math-shell{padding:18px}.section-head{display:block}.math-tabs{overflow-x:auto}.concept-layout,.practice,.doubts,.spot-structure,.dna-insights{grid-template-columns:1fr}.concept-layout aside{grid-template-columns:repeat(3,1fr);max-height:150px;overflow:auto}.question{border-left:0;border-top:1px solid var(--line);padding:24px 0}.poker-table{height:190px;border-width:6px}.board b,.board i{width:31px;height:45px;font-size:11px}.scenario{grid-template-columns:1fr 1fr 1fr}.spot-grid{grid-template-columns:repeat(3,1fr)}.calc-grid,.metrics,.dna-metrics{grid-template-columns:1fr 1fr}.explanation h3,.practice h3,.doubt-card h3,.dna-question h3,.dna-result h3{font-size:27px}.spot-row{grid-template-columns:1fr 1fr}.result-head{display:block}.confidence{margin:12px 0}.action-grid{grid-template-columns:1fr 1fr 1fr}}
+
+html body main:not(.module-page) .modules>a{background-color:rgba(31,54,31,.2)!important}
+html body main>nav.modules>a{background-color:rgba(31,54,31,.2)!important}
+
+/* Tela 2 — acabamento glass unificado dos controles solicitados. */
+html body .player-dna-page :is(.module-navigation .module-back,.mode-choices>label,.depth-choices>button,.saved-analysis-panel .primary,.history-actions .history-action){border:1px solid #255000!important;background-color:rgba(31,54,31,.2)!important;color:#1f361f!important;-webkit-backdrop-filter:blur(12px) saturate(120%)!important;backdrop-filter:blur(12px) saturate(120%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important}
+html body .player-dna-page :is(.module-navigation .module-back,.mode-choices>label,.depth-choices>button,.saved-analysis-panel .primary,.history-actions .history-action) :is(strong,span){color:#1f361f!important}
+html body .player-dna-page :is(.module-navigation .module-back,.mode-choices>label,.depth-choices>button,.saved-analysis-panel .primary,.history-actions .history-action):is(:hover,:focus-visible,:active),html body .player-dna-page .mode-choices>label:has(input:checked){border-color:#255000!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important}
+html body .player-dna-page :is(.module-navigation .module-back,.mode-choices>label,.depth-choices>button,.saved-analysis-panel .primary,.history-actions .history-action):not(#screen-two-glass-control){border-color:#255000!important;background-color:rgba(31,54,31,.2)!important;color:#1f361f!important}
+html body .player-dna-page .mode-choices>label:not(#screen-two-glass-control):has(input:checked),html body .player-dna-page :is(.module-navigation .module-back,.depth-choices>button,.saved-analysis-panel .primary,.history-actions .history-action):not(#screen-two-glass-control):is(:hover,:focus-visible,:active){border-color:#255000!important;background-color:rgba(31,54,31,.2)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important}
+html body .player-dna-page :is(.module-navigation .module-back,.mode-choices>label,.depth-choices>button,.saved-analysis-panel .primary,.history-actions .history-action):not(#screen-two-button-text){color:#009929!important}
+html body .player-dna-page :is(.module-navigation .module-back,.mode-choices>label,.depth-choices>button,.saved-analysis-panel .primary,.history-actions .history-action):not(#screen-two-button-text) :is(strong,span){color:#009929!important}
+html body .player-dna-page .mode-choices>label:not(#mode-choice-text)>strong{color:#ffffff!important;font-size:14px!important}
+html body .player-dna-page .depth-choices>button:not(#depth-number-text)>strong{color:#ffffff!important}
+html body .player-dna-page .mode-choices>label:not(#mode-white-a):not(#mode-white-b)>strong{color:#ffffff!important;font-size:14px!important}
+html body .player-dna-page .depth-choices>button:not(#spots-white-a):not(#spots-white-b)>strong{color:#ffffff!important}
+html body main.player-dna-page section.profile-panel .setup-intro:not(#silver-copy-a):not(#silver-copy-b){color:#c0c0c0!important;-webkit-text-fill-color:#c0c0c0!important;font-weight:500!important}
+html body main.player-dna-page section.profile-panel .saved-analysis-description:not(#silver-saved-copy),html body main.player-dna-page section.profile-panel .history-description:not(#silver-history-copy){color:#c0c0c0!important;-webkit-text-fill-color:#c0c0c0!important;font-weight:500!important;opacity:1!important}
+html body *:not(#app-font-weight-500){font-weight:500!important}
+html body .player-dna-page .depth-choices>button:not(#spots-silver-a):not(#spots-silver-b):not(#spots-silver-c)>strong{color:#c0c0c0!important}
+html body .player-dna-page .mode-choices>label:not(#mode-silver-a):not(#mode-silver-b):not(#mode-silver-c)>strong{color:#c0c0c0!important;font-size:14px!important}
+html body .player-dna-page .mode-choices>label:not(#selected-card-border-a):not(#selected-card-border-b):has(input:checked),html body .player-dna-page .depth-choices>button:not(#selected-card-border-a):not(#selected-card-border-b):active{border-color:#ede6db!important;box-shadow:inset 0 0 0 1px #ede6db!important}
+html body .player-dna-page .mode-choices>label:not(#selected-card-final-a):not(#selected-card-final-b):not(#selected-card-final-c):has(input:checked),html body .player-dna-page .depth-choices>button:not(#selected-card-final-a):not(#selected-card-final-b):not(#selected-card-final-c):is(:active,:focus,:focus-visible){border:1px solid #ede6db!important;border-color:#ede6db!important;box-shadow:inset 0 0 0 1px #ede6db!important}
+
+/* App inteiro — borda padrão de card/controle clicado ou selecionado. */
+html body :is(button,a,label):not(#app-selected-border-a):not(#app-selected-border-b):not(#app-selected-border-c):is(:active,:focus-visible,[aria-pressed="true"],[aria-selected="true"]),html body label:not(#app-selected-border-a):not(#app-selected-border-b):not(#app-selected-border-c):has(input:checked){border-color:#ede6db!important;box-shadow:inset 0 0 0 1px #ede6db!important}
+
+/* Padrão definitivo dos botões do app. CASH, TORNEIO e SPOTS preservam suas cores de texto. */
+html body :is(button,.module-back):not(#app-button-surface-a):not(#app-button-surface-b){
+  border-color:#255000!important;
+  background-color:rgba(31,54,31,.2)!important;
+  background-image:none!important;
+  color:#009929!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+  transition:border-color .15s ease!important;
+}
+html body :is(button,.module-back):not(#app-button-text-a):not(#app-button-text-b) :is(strong,span,small){color:#009929!important}
+html body :is(button,.module-back):not(#app-button-selected-a):not(#app-button-selected-b):is(:active,:focus,:focus-visible,[aria-pressed="true"],[aria-selected="true"]){border-color:#ede6db!important;box-shadow:inset 0 0 0 1px #ede6db!important}
+
+/* Exceções de texto: somente o acabamento visual compartilhado é aplicado. */
+html body .player-dna-page .mode-choices>label>strong{color:#c0c0c0!important}
+html body .player-dna-page .depth-choices>button>strong{color:#c0c0c0!important}
+html body .player-dna-page .depth-choices>button>span{color:#009929!important}
+html body .player-dna-page .mode-choices>label{border-color:#255000!important;background-color:rgba(31,54,31,.2)!important;background-image:none!important;-webkit-backdrop-filter:blur(12px) saturate(120%)!important;backdrop-filter:blur(12px) saturate(120%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important}
+html body .player-dna-page .mode-choices>label:has(input:checked){border-color:#ede6db!important;box-shadow:inset 0 0 0 1px #ede6db!important}
+
+/* Tela 3 — mesma área útil da Tela 2, sem molduras externas agrupadoras. */
+html body .player-dna-page .training-session{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+html body .player-dna-page .training-session>section{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  padding:0!important;
+  border:none!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}
+html body .player-dna-page .training-session [class*="actions"] button{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+
+@media(max-width:800px){
+  html body .player-dna-page .training-session .players-header,
+  html body .player-dna-page .training-session [class*="playerRow"]{
+    grid-template-columns:minmax(0,.8fr) minmax(0,1fr) minmax(0,.82fr) minmax(0,1fr) minmax(0,.82fr)!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    gap:5px!important;
+    padding-left:7px!important;
+    padding-right:7px!important;
+  }
+  html body .player-dna-page .training-session [class*="playerRow"]>*{min-width:0!important}
+  html body .player-dna-page .training-session [class*="playerRow"] [class*="cards"]{gap:2px!important}
+  html body .player-dna-page .training-session [class*="playerRow"] [class*="card"]{width:24px!important;height:32px!important}
+  html body .player-dna-page .training-session [class*="playerRow"] [class*="closed"]{width:22px!important;height:30px!important}
+}
+
+/* AI HAND REVIEW — hierarquia final, isolada nesta tela. */
+html body main.module-page.ai-hand-review-page .eyebrow{
+  color:#ede6db!important;
+  -webkit-text-fill-color:#ede6db!important;
+  font-size:18px!important;
+  line-height:1.15!important;
+  margin:0!important;
+}
+html body main.module-page.ai-hand-review-page [class*="intro"]>h2{
+  color:#009929!important;
+  -webkit-text-fill-color:#009929!important;
+  font-size:16px!important;
+  line-height:1.25!important;
+  margin:3px 0 5px!important;
+}
+html body main.module-page.ai-hand-review-page [class*="intro"]>p,
+html body main.module-page.ai-hand-review-page .ai-hand-review-feature-copy{
+  color:#c0c0c0!important;
+  -webkit-text-fill-color:#c0c0c0!important;
+  font-size:12px!important;
+  line-height:1.45!important;
+  opacity:1!important;
+}
+html body main.module-page.ai-hand-review-page [class*="stepHead"]>strong{
+  color:#ede6db!important;
+  -webkit-text-fill-color:#ede6db!important;
+  font-size:18px!important;
+  line-height:1.15!important;
+}
+html body main.module-page.ai-hand-review-page [class*="stepHead"]>span{
+  color:#009929!important;
+  -webkit-text-fill-color:#009929!important;
+  font-size:12px!important;
+}
+html body main.module-page.ai-hand-review-page [class*="sectionTitle"]>h3,
+html body main.module-page.ai-hand-review-page [class*="subhead"]{
+  color:#009929!important;
+  -webkit-text-fill-color:#009929!important;
+  font-size:14px!important;
+  line-height:1.3!important;
+}
+html body main.module-page.ai-hand-review-page .ai-hand-review-feature-title,
+html body main.module-page.ai-hand-review-page>[class*="workspace"]>section>div>div>h3{
+  color:#009929!important;
+  -webkit-text-fill-color:#009929!important;
+  font-size:16px!important;
+  line-height:1.25!important;
+}
+html body main.module-page.ai-hand-review-page>[class*="workspace"]>section>div>div>p,
+html body main.module-page.ai-hand-review-page :is([class*="sectionTitle"]>small,[class*="helperText"],[class*="muted"]){
+  color:#c0c0c0!important;
+  -webkit-text-fill-color:#c0c0c0!important;
+  font-size:12px!important;
+  line-height:1.45!important;
+  opacity:1!important;
+}
+html body main.module-page.ai-hand-review-page :is(button,.module-back,[class*="choice"]){
+  min-height:30px!important;
+  padding:5px 8px!important;
+  border:1px solid #255000!important;
+  border-radius:12px!important;
+  background:rgba(31,54,31,.2)!important;
+  background-image:none!important;
+  color:#009929!important;
+  -webkit-text-fill-color:#009929!important;
+  font-size:12px!important;
+  line-height:1.15!important;
+  text-align:center!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+html body main.module-page.ai-hand-review-page :is(button,.module-back,[class*="choice"]):is(:active,:focus-visible,[aria-pressed="true"]),
+html body main.module-page.ai-hand-review-page [class*="choice"][class*="active"]{
+  border-color:#ede6db!important;
+  box-shadow:inset 0 0 0 1px #ede6db!important;
+}
+
+/* AI Hand Review — hierarquia visual equivalente à tela principal do Player DNA. */
+html body .ai-hand-review-page .eyebrow{color:#ede6db!important;-webkit-text-fill-color:#ede6db!important;font-size:18px!important;line-height:1.15!important;margin:0!important}
+html body .ai-hand-review-page h2{color:#009929!important;-webkit-text-fill-color:#009929!important;font-size:16px!important;line-height:1.25!important;margin:3px 0 5px!important}
+html body .ai-hand-review-page [class*="intro"] p,
+html body .ai-hand-review-page section>p{color:#c0c0c0!important;-webkit-text-fill-color:#c0c0c0!important;font-size:12px!important;line-height:1.45!important;opacity:1!important}
+html body .ai-hand-review-page [class*="stepHead"] strong{color:#ede6db!important;-webkit-text-fill-color:#ede6db!important;font-size:18px!important;line-height:1.15!important}
+html body .ai-hand-review-page [class*="stepHead"] span{color:#009929!important;-webkit-text-fill-color:#009929!important;font-size:12px!important;border-color:#255000!important;background:rgba(31,54,31,.2)!important;-webkit-backdrop-filter:blur(12px) saturate(120%)!important;backdrop-filter:blur(12px) saturate(120%)!important}
+html body .ai-hand-review-page [class*="sectionTitle"] h3,
+html body .ai-hand-review-page [class*="subhead"]{color:#009929!important;-webkit-text-fill-color:#009929!important;font-size:14px!important;line-height:1.3!important}
+html body .ai-hand-review-page [class*="sectionTitle"] small,
+html body .ai-hand-review-page [class*="helperText"],
+html body .ai-hand-review-page [class*="muted"]{color:#c0c0c0!important;-webkit-text-fill-color:#c0c0c0!important;font-size:12px!important}
+html body .ai-hand-review-page :is(button,.module-back,[class*="choice"]){min-height:30px!important;padding:5px 8px!important;border:1px solid #255000!important;border-radius:12px!important;background:rgba(31,54,31,.2)!important;background-image:none!important;color:#009929!important;-webkit-text-fill-color:#009929!important;font-size:12px!important;line-height:1.15!important;text-align:center!important;-webkit-backdrop-filter:blur(12px) saturate(120%)!important;backdrop-filter:blur(12px) saturate(120%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important}
+html body .ai-hand-review-page :is(button,.module-back,[class*="choice"]):is(:active,:focus-visible,[aria-pressed="true"]),
+html body .ai-hand-review-page [class*="choice"][class*="active"]{border-color:#ede6db!important;box-shadow:inset 0 0 0 1px #ede6db!important}
+html body .ai-hand-review-page :is([class*="moneyField"],[class*="summary"]>div,[class*="analysisCard"],[class*="metric"],[class*="verdict"],[class*="validation"]){border:1px solid #255000!important;border-radius:12px!important;background:rgba(31,54,31,.2)!important;background-image:none!important;-webkit-backdrop-filter:blur(12px) saturate(120%)!important;backdrop-filter:blur(12px) saturate(120%)!important}
+html body .ai-hand-review-page :is(input,textarea){color:#c0c0c0!important;-webkit-text-fill-color:#c0c0c0!important;font-size:12px!important;border-color:#255000!important;background:rgba(31,54,31,.2)!important}
+html body .ai-hand-review-page :is([class*="moneyField"],[class*="actionAmount"])>span,
+html body .ai-hand-review-page :is([class*="summary"],[class*="analysisCard"],[class*="metric"],[class*="verdict"]) small{color:#c0c0c0!important;-webkit-text-fill-color:#c0c0c0!important;font-size:12px!important}
+html body .ai-hand-review-page :is([class*="summary"],[class*="analysisCard"],[class*="metric"],[class*="verdict"]) strong{color:#ede6db!important;-webkit-text-fill-color:#ede6db!important;font-size:14px!important}
+
+html body .player-dna-page .training-session [class*="progressHead"] span,
+html body .player-dna-page .training-session [class*="progressHead"] strong{font-size:16px!important}
+
+/* Tela 2 — progresso distribuído nas extremidades da mesma linha. */
+html body .player-dna-page .saved-analysis-panel .saved-analysis-status{
+  display:flex!important;
+  width:100%!important;
+  justify-content:space-between!important;
+  flex-wrap:nowrap!important;
+  font-size:16px!important;
+}
+html body .player-dna-page .saved-analysis-panel .saved-analysis-status>span{font-size:16px!important}
+html body .player-dna-page .saved-analysis-panel .saved-analysis-status>span:last-child{margin-left:auto!important;text-align:right!important}
+
+html body .player-dna-page .training-session [class*="prompt"]{
+  font-size:18px!important;
+  color:#ede6db!important;
+  -webkit-text-fill-color:#ede6db!important;
+}
+
+/* Tela 3 — cards funcionais de nível e histórico de ações. */
+html body .player-dna-page .training-session>section[class*="levelCard"],
+html body .player-dna-page .training-session>section[class*="actionsCard"]{
+  padding:12px!important;
+  border:1px solid #255000!important;
+  background-color:rgba(31,54,31,.2)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+html body .player-dna-page .training-session [class*="actionsCardTitle"] h4{color:#ede6db!important;font-size:16px!important}
+html body .player-dna-page .training-session [class*="actionBadge"]{color:#009929!important;font-size:11px!important}
+html body .player-dna-page .training-session [class*="actionStack"]{color:#ede6db!important;font-size:12px!important}
+html body .player-dna-page .training-session [class*="levelValues"] span{color:#009929!important;font-size:12px!important}
+html body .player-dna-page .training-session [class*="levelValues"] strong{color:#ede6db!important;font-size:14px!important}
+
+@media(max-width:800px){
+  html body .player-dna-page .training-session>section[class*="levelCard"],
+  html body .player-dna-page .training-session>section[class*="actionsCard"]{padding:10px!important}
+  html body .player-dna-page .training-session [class*="actionBadge"]{font-size:10px!important}
+  html body .player-dna-page .training-session [class*="actionStack"]{font-size:11px!important}
+  html body .player-dna-page .training-session [class*="levelValues"] strong{font-size:12px!important}
+}
+
+/* Tela 3 — um único card externo para o fluxo dos jogadores. */
+html body .player-dna-page .training-session [class*="actionLine"]{
+  grid-template-columns:104px 104px repeat(2,minmax(0,1fr))!important;
+  min-height:32px!important;
+  padding:2px!important;
+  border:none!important;
+  border-radius:0!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}
+html body .player-dna-page .training-session [class*="actionsCardTitle"]>[class*="badge"],
+html body .player-dna-page .training-session [class*="actionLine"]>[class*="badge"],
+html body .player-dna-page .training-session [class*="actionBadge"]{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:104px!important;
+  min-width:104px!important;
+  height:30px!important;
+  min-height:30px!important;
+  padding:5px 7px!important;
+  text-align:center!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+@media(max-width:800px){
+  html body .player-dna-page .training-session [class*="actionLine"]{
+    grid-template-columns:90px 90px repeat(2,minmax(0,1fr))!important;
+    gap:5px!important;
+  }
+  html body .player-dna-page .training-session [class*="actionsCardTitle"]>[class*="badge"],
+  html body .player-dna-page .training-session [class*="actionLine"]>[class*="badge"],
+  html body .player-dna-page .training-session [class*="actionBadge"]{
+    width:90px!important;
+    min-width:90px!important;
+  }
+}
+
+/* Tela 3 — correção isolada do contêiner e das linhas do POT. */
+html body .player-dna-page .training-session [class*="potRows"]:not(#pot-rows-layout-fix){
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  align-items:stretch!important;
+  gap:8px!important;
+  width:100%!important;
+}
+html body .player-dna-page .training-session [class*="potRows"]:not(#pot-rows-layout-fix)>[class*="potRow"]:not([class*="potRows"]){
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  justify-self:stretch!important;
+  width:100%!important;
+  min-width:0!important;
+  text-align:initial!important;
+}
+
+/* Tela 3 — padrão visual único para cards, badges e botões. */
+html body .player-dna-page .training-session :is(
+  [class*="levelSummary"],
+  [class*="potRow"]:not([class*="potRows"]),
+  [class*="boardRow"],
+  [class*="heroContent"],
+  [class*="actionsCard"]
+):not(#screen-three-surface-standard){
+  border:1px solid #255000!important;
+  background-color:rgba(31,54,31,.2)!important;
+  background-image:none!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+html body .player-dna-page .training-session :is([class*="badge"],[class*="actionBadge"]):not(#screen-three-badge-standard){
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:90px!important;
+  min-width:90px!important;
+  max-width:90px!important;
+  height:30px!important;
+  min-height:30px!important;
+  padding:5px 6px!important;
+  border:1px solid #255000!important;
+  border-radius:12px!important;
+  background-color:rgba(31,54,31,.2)!important;
+  background-image:none!important;
+  color:#009929!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+  font-size:12px!important;
+  line-height:1!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+html body .player-dna-page .training-session button:not(#screen-three-button-standard){
+  border:1px solid #255000!important;
+  background-color:rgba(31,54,31,.2)!important;
+  background-image:none!important;
+  color:#009929!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+html body .player-dna-page .training-session button:not(#screen-three-button-standard) :is(strong,span){color:#009929!important}
+html body .player-dna-page .training-session button:not(#screen-three-button-standard):is(:active,:focus,:focus-visible,[aria-pressed="true"],[aria-selected="true"]){border-color:#ede6db!important;box-shadow:inset 0 0 0 1px #ede6db!important}
+
+@media(max-width:800px){
+  html body .player-dna-page .training-session :is([class*="badge"],[class*="actionBadge"]):not(#screen-three-badge-standard){
+    width:86px!important;
+    min-width:86px!important;
+    max-width:86px!important;
+  }
+}
+
+/* Tela 3 — informações internas dos cards em prata e 12px. */
+html body .player-dna-page .training-session :is(
+  [class*="levelSummary"],
+  [class*="potRow"]:not([class*="potRows"]),
+  [class*="boardRow"],
+  [class*="heroContent"],
+  [class*="actionsCard"]
+) :is(span,strong,small,b,i):not(#screen-three-card-copy){
+  color:#c0c0c0!important;
+  -webkit-text-fill-color:#c0c0c0!important;
+  font-size:12px!important;
+}
+html body .player-dna-page .training-session :is(
+  [class*="levelSummary"],
+  [class*="potRow"]:not([class*="potRows"]),
+  [class*="boardRow"],
+  [class*="heroContent"],
+  [class*="actionsCard"]
+) :is([class*="badge"],[class*="actionBadge"]):not(#screen-three-badge-color-restore){
+  color:#009929!important;
+  -webkit-text-fill-color:#009929!important;
+  font-size:12px!important;
+}
+
+/* Tela 3 — ações finais em duas metades iguais, logo após as decisões. */
+html body .player-dna-page .training-session .training-footer{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;
+  width:100%!important;
+  margin:0!important;
+}
+html body .player-dna-page .training-session .training-footer>button{
+  width:100%!important;
+  min-width:0!important;
+  height:30px!important;
+  min-height:30px!important;
+  padding:5px 8px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  font-size:12px!important;
+  line-height:1!important;
+}
+html body .player-dna-page .training-session .training-footer>button strong{font-size:12px!important;text-align:center!important}
+
+/* Identificação visual do HERÓI durante sua vez. */
+html body .player-dna-page .training-session [class*="heroContent"],
+html body .player-dna-page .training-session [class*="heroMarker"]{
+  border-color:#ede6db!important;
+  animation:screenThreeHeroGlow 1.15s ease-in-out infinite!important;
+}
+@keyframes screenThreeHeroGlow{
+  0%,100%{box-shadow:inset 0 0 0 1px #ede6db,0 0 4px rgba(237,230,219,.28)}
+  50%{box-shadow:inset 0 0 0 1px #ede6db,0 0 15px rgba(237,230,219,.88)}
+}
+html body .player-dna-page .training-session [class*="actionLine"]>[class*="heroMarker"]:not(#hero-position-highlight){
+  border:1px solid #ede6db!important;
+  background-color:rgba(31,54,31,.45)!important;
+  color:#ede6db!important;
+  -webkit-text-fill-color:#ede6db!important;
+  font-weight:500!important;
+  animation:screenThreeHeroGlow 1.15s ease-in-out infinite!important;
+}
+
+/* Pulso visível acima do acabamento glass fixo. */
+html body main.player-dna-page section.profile-panel .training-session [class*="heroContent"]:not(#hero-glow-a):not(#hero-glow-b),
+html body main.player-dna-page section.profile-panel .training-session [class*="heroContent"]>[class*="heroMarker"]:not(#hero-glow-a):not(#hero-glow-b),
+html body main.player-dna-page section.profile-panel .training-session [class*="actionLine"]>[class*="heroMarker"]:not(#hero-glow-a):not(#hero-glow-b){
+  border-color:#ede6db!important;
+  animation:screenThreeHeroVisiblePulse 1.1s ease-in-out infinite!important;
+  transform-origin:center!important;
+  will-change:filter,transform,opacity!important;
+}
+html body main.player-dna-page section.profile-panel .training-session [class*="heroContent"]>[class*="heroMarker"]:not(#hero-glow-a):not(#hero-glow-b),
+html body main.player-dna-page section.profile-panel .training-session [class*="actionLine"]>[class*="heroMarker"]:not(#hero-glow-a):not(#hero-glow-b){
+  color:#ede6db!important;
+  -webkit-text-fill-color:#ede6db!important;
+}
+@keyframes screenThreeHeroVisiblePulse{
+  0%,100%{filter:brightness(1) drop-shadow(0 0 2px rgba(237,230,219,.25));transform:scale(1);opacity:1}
+  50%{filter:brightness(1.65) drop-shadow(0 0 10px rgba(237,230,219,.95));transform:scale(1.018);opacity:.82}
+}
+
+/* Somente o badge de posição dentro do card HERÓI permanece animado. */
+html body main.player-dna-page section.profile-panel .training-session [class*="heroContent"]:not(#hero-animation-scope){
+  animation:none!important;
+  filter:none!important;
+  transform:none!important;
+  opacity:1!important;
+  will-change:auto!important;
+}
+html body main.player-dna-page section.profile-panel .training-session [class*="heroContent"]>[class*="heroMarker"]:not(#hero-animation-scope){
+  animation:screenThreeHeroVisiblePulse 1.1s ease-in-out infinite!important;
+  transform-origin:center!important;
+  will-change:filter,transform,opacity!important;
+}
+
+/* Escopo definitivo: nenhum ancestral ou badge da lista pode pulsar. */
+html body main.player-dna-page section.profile-panel .training-session [class*="heroContent"]:not(#hero-stop-a):not(#hero-stop-b):not(#hero-stop-c){
+  animation:none!important;
+  filter:none!important;
+  transform:none!important;
+  opacity:1!important;
+  will-change:auto!important;
+}
+html body main.player-dna-page section.profile-panel .training-session [class*="heroContent"]>[class*="heroMarker"]:not(#hero-only-a):not(#hero-only-b):not(#hero-only-c):not(#hero-only-d){
+  animation:screenThreeHeroVisiblePulse 1.1s ease-in-out infinite!important;
+  transform-origin:center!important;
+  will-change:filter,transform,opacity!important;
+}
+
+/* Estado final do HERÓI: card estático; somente os dois badges de posição pulsam. */
+html body main.player-dna-page section.profile-panel .training-session [class*="heroContent"]:not(#hero-card-final-a):not(#hero-card-final-b):not(#hero-card-final-c):not(#hero-card-final-d):not(#hero-card-final-e){
+  border:1px solid #255000!important;
+  background-color:rgba(31,54,31,.2)!important;
+  background-image:none!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+  animation:none!important;
+  filter:none!important;
+  transform:none!important;
+  opacity:1!important;
+  will-change:auto!important;
+}
+html body main.player-dna-page section.profile-panel .training-session [class*="heroContent"]>[class*="heroMarker"]:not(#hero-badge-final-a):not(#hero-badge-final-b):not(#hero-badge-final-c):not(#hero-badge-final-d):not(#hero-badge-final-e):not(#hero-badge-final-f),
+html body main.player-dna-page section.profile-panel .training-session [class*="actionLine"]>[class*="heroMarker"]:not(#hero-badge-final-a):not(#hero-badge-final-b):not(#hero-badge-final-c):not(#hero-badge-final-d):not(#hero-badge-final-e):not(#hero-badge-final-f){
+  border:1px solid #ede6db!important;
+  color:#ede6db!important;
+  -webkit-text-fill-color:#ede6db!important;
+  animation:screenThreeHeroVisiblePulse 1.1s ease-in-out infinite!important;
+  transform-origin:center!important;
+  will-change:filter,transform,opacity!important;
+}
+
+/* Badge do HERÓI na lista: efeito dedicado, forte e inequivocamente visível. */
+html body main.player-dna-page section.profile-panel .training-session [class*="actionLine"]>[class*="heroListMarker"]:not(#hero-list-a):not(#hero-list-b):not(#hero-list-c):not(#hero-list-d):not(#hero-list-e):not(#hero-list-f):not(#hero-list-g){
+  border:1px solid #ede6db!important;
+  color:#ede6db!important;
+  -webkit-text-fill-color:#ede6db!important;
+  animation:heroListPositionFlash .8s ease-in-out infinite!important;
+  transform-origin:center!important;
+  will-change:filter,transform,opacity!important;
+}
+@keyframes heroListPositionFlash{
+  0%,100%{filter:brightness(1) drop-shadow(0 0 1px rgba(237,230,219,.35));transform:scale(1);opacity:1}
+  50%{filter:brightness(2.2) drop-shadow(0 0 13px rgba(237,230,219,1));transform:scale(1.06);opacity:.45}
+}
+
+/* Tela 3 — alinhamento do cabeçalho de ações e card exclusivo do herói. */
+html body .player-dna-page .training-session [class*="actionsCardTitle"]{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+}
+html body .player-dna-page .training-session [class*="actionsCardTitle"] h4{
+  display:flex!important;
+  align-items:center!important;
+  min-height:30px!important;
+  margin:0!important;
+  line-height:30px!important;
+}
+html body .player-dna-page .training-session>section[class*="heroCard"]{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  padding:12px!important;
+  border:1px solid #255000!important;
+  background-color:rgba(31,54,31,.2)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+html body .player-dna-page .training-session [class*="heroContent"]>div>span{color:#009929!important;font-size:10px!important}
+html body .player-dna-page .training-session [class*="heroContent"]>div>strong{color:#ede6db!important;font-size:14px!important}
+
+@media(max-width:800px){
+  html body .player-dna-page .training-session>section[class*="heroCard"]{padding:10px!important}
+  html body .player-dna-page .training-session [class*="heroContent"]{grid-template-columns:auto minmax(62px,1fr) minmax(76px,1fr)!important;gap:8px!important}
+  html body .player-dna-page .training-session [class*="heroContent"]>div>strong{font-size:12px!important}
+}
+
+html body .player-dna-page .analysis-balance-note{
+  margin:8px 0 0!important;
+  color:#c0c0c0!important;
+  -webkit-text-fill-color:#c0c0c0!important;
+  font-size:12px!important;
+  line-height:1.45!important;
+}
+
+/* App inteiro — um único modelo de arredondamento para todas as bordas. */
+html body *,
+html body *::before,
+html body *::after{border-radius:12px!important}
+
+/* Tela 3 — nível em uma única linha, sem card externo. */
+html body .player-dna-page .training-session>section[class*="levelSection"]{
+  padding:0!important;
+  border:none!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}
+html body .player-dna-page .training-session [class*="levelSummary"]{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  width:100%!important;
+  min-height:42px!important;
+  padding:8px 10px!important;
+  border:1px solid #255000!important;
+  background-color:rgba(31,54,31,.2)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+}
+html body .player-dna-page .training-session [class*="levelNumber"]{color:#009929!important;font-size:14px!important;text-align:left!important}
+html body .player-dna-page .training-session [class*="levelSummary"]>strong{color:#c0c0c0!important;-webkit-text-fill-color:#c0c0c0!important;font-size:12px!important;text-align:left!important}
+
+/* Tela 3 — título de jogadores fora do card de ações. */
+html body .player-dna-page .training-session>section[class*="actionsSection"]{
+  padding:0!important;
+  border:none!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}
+html body .player-dna-page .training-session>section[class*="actionsSection"]>[class*="actionsCard"]{
+  width:100%!important;
+  padding:10px!important;
+  border:1px solid #255000!important;
+  background-color:rgba(31,54,31,.2)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+
+/* Tela 3 — seção HERÓI sem card externo. */
+html body .player-dna-page .training-session>section[class*="heroCard"]:not(#hero-external-card){
+  padding:0!important;
+  border:none!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+html body .player-dna-page .training-session [class*="heroContent"]{
+  display:grid!important;
+  grid-template-columns:90px auto minmax(72px,1fr)!important;
+  align-items:center!important;
+  gap:12px!important;
+  min-height:58px!important;
+  padding:8px 10px!important;
+  border:1px solid #255000!important;
+  background-color:rgba(31,54,31,.2)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+html body .player-dna-page .training-session [class*="heroContent"]>[class*="badge"]{width:90px!important;min-width:90px!important;height:30px!important;justify-content:center!important}
+html body .player-dna-page .training-session [class*="heroContent"]>strong{color:#ede6db!important;font-size:14px!important;text-align:right!important}
+
+@media(max-width:800px){
+  html body .player-dna-page .training-session [class*="heroContent"]{grid-template-columns:78px auto minmax(58px,1fr)!important;gap:8px!important}
+  html body .player-dna-page .training-session [class*="heroContent"]>[class*="badge"]{width:78px!important;min-width:78px!important}
+  html body .player-dna-page .training-session [class*="heroContent"]>strong{font-size:12px!important}
+}
+
+/* Tela 3 — grade compartilhada de três colunas em todos os cards informativos. */
+html body .player-dna-page .training-session :is(
+  [class*="levelSummary"],
+  [class*="potRow"]:not([class*="potRows"]),
+  [class*="boardRow"],
+  [class*="heroContent"],
+  [class*="actionLine"]
+){
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  align-items:center!important;
+  gap:8px!important;
+  width:100%!important;
+}
+
+html body .player-dna-page .training-session [class*="levelSummary"]>[class*="levelNumber"]{
+  grid-column:1!important;
+  justify-self:start!important;
+  text-align:left!important;
+}
+html body .player-dna-page .training-session [class*="levelSummary"]>strong{
+  grid-column:2/4!important;
+  justify-self:end!important;
+  text-align:right!important;
+}
+html body .player-dna-page .training-session [class*="boardRow"]>[class*="badge"]{grid-column:1!important;justify-self:center!important}
+html body .player-dna-page .training-session [class*="boardRow"]>[class*="cards"]{grid-column:2/4!important;justify-self:center!important;align-self:center!important}
+html body .player-dna-page .training-session [class*="potRow"]:not([class*="potRows"])>*{justify-self:center!important;text-align:center!important}
+html body .player-dna-page .training-session [class*="heroContent"]>*{justify-self:center!important;text-align:center!important}
+html body .player-dna-page .training-session [class*="actionLine"]>*{justify-self:center!important;text-align:center!important}
+html body .player-dna-page .training-session [class*="actionStack"]{grid-column:3!important}
+html body .player-dna-page .training-session [class*="actionsCardTitle"]{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+html body .player-dna-page .training-session [class*="actionsCardTitle"]>[class*="badge"]{grid-column:1!important;justify-self:center!important}
+
+/* Todos os badges informativos seguem uma única dimensão. */
+html body .player-dna-page .training-session :is(
+  [class*="levelSummary"],
+  [class*="potRow"]:not([class*="potRows"]),
+  [class*="boardRow"],
+  [class*="heroContent"],
+  [class*="actionsCardTitle"],
+  [class*="actionLine"]
+) :is([class*="badge"],[class*="actionBadge"]){
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:90px!important;
+  min-width:90px!important;
+  max-width:90px!important;
+  height:30px!important;
+  min-height:30px!important;
+  padding:5px 6px!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+/* Altura adaptável: até cinco jogadores visíveis; os demais ficam na rolagem. */
+html body .player-dna-page .training-session [class*="actionsCard"]{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+}
+html body .player-dna-page .training-session [class*="actionHistory"]{
+  height:auto!important;
+  min-height:0!important;
+  max-height:184px!important;
+  overflow-y:auto!important;
+  align-content:start!important;
+}
+
+@media(max-width:800px){
+  html body .player-dna-page .training-session :is(
+    [class*="levelSummary"],
+    [class*="potRow"]:not([class*="potRows"]),
+    [class*="boardRow"],
+    [class*="heroContent"],
+    [class*="actionLine"]
+  ){grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+  html body .player-dna-page .training-session :is(
+    [class*="levelSummary"],
+    [class*="potRow"]:not([class*="potRows"]),
+    [class*="boardRow"],
+    [class*="heroContent"],
+    [class*="actionsCardTitle"],
+    [class*="actionLine"]
+  ) :is([class*="badge"],[class*="actionBadge"]){
+    width:86px!important;
+    min-width:86px!important;
+    max-width:86px!important;
+  }
+}
+
+/* AI HAND REVIEW — trava final de hierarquia, após todas as regras globais. */
+html body main.module-page.ai-hand-review-page .eyebrow{color:#ede6db!important;-webkit-text-fill-color:#ede6db!important;font-size:18px!important;line-height:1.15!important;margin:0!important}
+html body main.module-page.ai-hand-review-page [class*="intro"]>h2{color:#009929!important;-webkit-text-fill-color:#009929!important;font-size:16px!important;line-height:1.25!important;margin:3px 0 5px!important}
+html body main.module-page.ai-hand-review-page [class*="intro"]>p{color:#c0c0c0!important;-webkit-text-fill-color:#c0c0c0!important;font-size:12px!important;line-height:1.45!important;opacity:1!important}
+html body main.module-page.ai-hand-review-page [class*="stepHead"]>strong{color:#ede6db!important;-webkit-text-fill-color:#ede6db!important;font-size:18px!important;line-height:1.15!important}
+html body main.module-page.ai-hand-review-page [class*="stepHead"]>span{color:#009929!important;-webkit-text-fill-color:#009929!important;font-size:12px!important}
+html body main.module-page.ai-hand-review-page [class*="sectionTitle"]>h3,
+html body main.module-page.ai-hand-review-page [class*="subhead"]{color:#009929!important;-webkit-text-fill-color:#009929!important;font-size:14px!important;line-height:1.3!important}
+html body main.module-page.ai-hand-review-page .ai-hand-review-feature-title,
+html body main.module-page.ai-hand-review-page>[class*="workspace"]>section>div>div>h3{color:#009929!important;-webkit-text-fill-color:#009929!important;font-size:16px!important;line-height:1.25!important}
+html body main.module-page.ai-hand-review-page .ai-hand-review-feature-copy,
+html body main.module-page.ai-hand-review-page>[class*="workspace"]>section>div>div>p,
+html body main.module-page.ai-hand-review-page :is([class*="sectionTitle"]>small,[class*="helperText"],[class*="muted"]){color:#c0c0c0!important;-webkit-text-fill-color:#c0c0c0!important;font-size:12px!important;line-height:1.45!important;opacity:1!important}
+html body main.module-page.ai-hand-review-page :is(button,.module-back,[class*="choice"]){min-height:30px!important;padding:5px 8px!important;border:1px solid #255000!important;border-radius:12px!important;background:rgba(31,54,31,.2)!important;background-image:none!important;color:#009929!important;-webkit-text-fill-color:#009929!important;font-size:12px!important;line-height:1.15!important;text-align:center!important;-webkit-backdrop-filter:blur(12px) saturate(120%)!important;backdrop-filter:blur(12px) saturate(120%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important}
+html body main.module-page.ai-hand-review-page :is(button,.module-back,[class*="choice"]):is(:active,:focus-visible,[aria-pressed="true"]),
+html body main.module-page.ai-hand-review-page [class*="choice"][class*="active"]{border-color:#ede6db!important;box-shadow:inset 0 0 0 1px #ede6db!important}
+
+/* AI HAND REVIEW — nenhuma moldura estrutural: conteúdo útil direto no fundo. */
+html body main.module-page.ai-hand-review-page>[class*="workspace"],
+html body main.module-page.ai-hand-review-page>[class*="workspace"]>[class*="step"],
+html body main.module-page.ai-hand-review-page>[class*="workspace"]>[class*="step"]>[class*="section"],
+html body main.module-page.ai-hand-review-page>[class*="workspace"]>[class*="step"]>[class*="stepGrid"]>[class*="section"],
+html body main.module-page.ai-hand-review-page>[class*="workspace"]>section{
+  border:0!important;
+  outline:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+html body main.module-page.ai-hand-review-page>[class*="workspace"]>[class*="step"],
+html body main.module-page.ai-hand-review-page>[class*="workspace"]>[class*="step"]>[class*="section"],
+html body main.module-page.ai-hand-review-page>[class*="workspace"]>[class*="step"]>[class*="stepGrid"]>[class*="section"]{
+  padding:0!important;
+}
+
+/* AI HAND REVIEW — cartas do board sempre visualmente identificáveis. */
+html body main.module-page.ai-hand-review-page [class*="cards"]>button[class*="card"]{
+  min-height:64px!important;
+  padding:6px!important;
+  border:1px solid #255000!important;
+  border-radius:12px!important;
+  background:rgba(31,54,31,.2)!important;
+  color:#ede6db!important;
+  -webkit-text-fill-color:#ede6db!important;
+  font-size:18px!important;
+  opacity:1!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;
+}
+html body main.module-page.ai-hand-review-page [class*="cards"]>button[class*="card"]:disabled{
+  opacity:.45!important;
+  border-color:#255000!important;
+  color:#009929!important;
+  -webkit-text-fill-color:#009929!important;
+}
+
+/* Resultado do AI Hand Review — grupos sem moldura; somente cards úteis têm borda. */
+html body main.module-page.ai-hand-review-page :is([class*="metrics"],[class*="analysisGrid"],[class*="summary"]){
+  border:0!important;
+  outline:0!important;
+  border-radius:0!important;
+  padding:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+html body main.module-page.ai-hand-review-page [class*="analysisCard"] p{
+  white-space:pre-wrap!important;
+  color:#c0c0c0!important;
+  -webkit-text-fill-color:#c0c0c0!important;
+  font-size:12px!important;
+  line-height:1.55!important;
+}
+
+/* Regra global — contêineres de organização nunca formam cards externos. */
+html body :is(
+  .panel,
+  .math-shell,
+  .section-head,
+  .concept-layout,
+  .practice,
+  .question,
+  .doubts,
+  .spot-structure,
+  .dna-insights,
+  .metrics,
+  .dna-metrics,
+  [class*="workspace"],
+  [class*="stepGrid"],
+  [class*="analysisGrid"],
+  [class*="resultGrid"],
+  [class*="liveMath"],
+  [class*="moneyGrid"]
+){
+  border:0!important;
+  outline:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+html body :is(.panel,.math-shell){padding-left:0!important;padding-right:0!important}
+html body .question{padding-left:0!important}
+html body main>[class*="workspace"]>[class*="step"],
+html body main>[class*="workspace"]>[class*="step"]>[class*="section"],
+html body main>[class*="workspace"]>[class*="step"]>[class*="stepGrid"]>[class*="section"]{
+  border:0!important;
+  outline:0!important;
+  border-radius:0!important;
+  padding-left:0!important;
+  padding-right:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}

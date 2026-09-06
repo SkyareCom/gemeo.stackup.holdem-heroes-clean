@@ -1,0 +1,3 @@
+.host{display:block;width:100%;padding:0;transform:none;margin-top:4px!important;margin-bottom:0!important;isolation:isolate;overflow:visible}
+.host>div{margin:0!important}
+@media(max-width:800px){.host{transform:none;margin-top:4px!important;margin-bottom:0!important}}
