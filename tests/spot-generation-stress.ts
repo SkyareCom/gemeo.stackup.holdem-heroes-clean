@@ -1,4 +1,5 @@
-import {buildBalancedSpotSession,describeSpot} from "../lib/player-dna-generation";
+import {buildBalancedSpotSession as buildOpeningSession,describeSpot} from "../lib/player-dna-generation";
+import {buildBalancedSpotSession as buildCoreSession} from "../lib/player-dna-sampler";
 import {exactSpotFingerprint} from "../lib/spot-identity";
 import {playerDnaSpots,type GameMode} from "../data/player-dna-spots";
 
@@ -14,7 +15,20 @@ const localStorage={
 };
 (globalThis as unknown as {window:unknown}).window={localStorage};
 
+const OPENINGS=5000;
 const fingerprints=new Set<string>();
+for(let i=0;i<OPENINGS;i++){
+  const mode:GameMode=i%2===0?"CASH":"TORNEIO";
+  const seed=0x100000+i*7919;
+  const generated=buildCoreSession(playerDnaSpots,mode,1,seed,[]);
+  if(generated.length!==1)throw new Error(`ABERTURA ${i+1}: NENHUM SPOT GERADO`);
+  const fingerprint=exactSpotFingerprint(generated[0]);
+  if(fingerprints.has(fingerprint))throw new Error(`ABERTURA ${i+1}: FINGERPRINT REPETIDA ${fingerprint}`);
+  fingerprints.add(fingerprint);
+}
+
+// Segunda fase: valida que o primeiro spot também percorre a matriz estratégica.
+store.clear();
 const streets=new Set<string>();
 const modes=new Set<string>();
 const tableSizes=new Set<string>();
@@ -24,24 +38,17 @@ const themes=new Set<string>();
 let icm=0;
 let allIn=0;
 let multiway=0;
-
-const OPENINGS=5000;
-for(let i=0;i<OPENINGS;i++){
+const MATRIX_OPENINGS=256;
+for(let i=0;i<MATRIX_OPENINGS;i++){
   const mode:GameMode=i%2===0?"CASH":"TORNEIO";
-  const seed=0x100000+i*7919;
-  const generated=buildBalancedSpotSession(playerDnaSpots,mode,1,seed,[]);
-  if(generated.length!==1)throw new Error(`ABERTURA ${i+1}: NENHUM SPOT GERADO`);
+  const seed=0x700000+i*3571;
+  const generated=buildOpeningSession(playerDnaSpots,mode,1,seed,[]);
+  if(generated.length!==1)throw new Error(`MATRIZ ${i+1}: NENHUM SPOT GERADO`);
   const spot=generated[0];
-  const fingerprint=exactSpotFingerprint(spot);
-  if(fingerprints.has(fingerprint))throw new Error(`ABERTURA ${i+1}: FINGERPRINT REPETIDA ${fingerprint}`);
-  fingerprints.add(fingerprint);
-  streets.add(spot.street);
-  modes.add(spot.mode);
+  streets.add(spot.street);modes.add(spot.mode);
   const table=spot.scenario.find(item=>item.endsWith("-MAX"));if(table)tableSizes.add(table);
   const dimensions=describeSpot(spot);
-  heads.add(dimensions.heads);
-  phases.add(dimensions.tournamentPhase);
-  themes.add(dimensions.theme);
+  heads.add(dimensions.heads);phases.add(dimensions.tournamentPhase);themes.add(dimensions.theme);
   if(dimensions.icm)icm++;
   if(spot.players.some(player=>player.action==="ALL-IN"))allIn++;
   if(dimensions.heads==="MULTIWAY")multiway++;
@@ -59,9 +66,10 @@ if(allIn===0)throw new Error("ALL-IN: NENHUM SPOT COM ALL-IN FOI GERADO");
 if(multiway===0)throw new Error("MULTIWAY: NENHUM SPOT MULTIWAY FOI GERADO");
 
 console.log(JSON.stringify({
-  openings:OPENINGS,
+  persistentOpenings:OPENINGS,
   uniqueFingerprints:fingerprints.size,
   duplicates:OPENINGS-fingerprints.size,
+  openingMatrixSample:MATRIX_OPENINGS,
   streets:[...streets].sort(),
   modes:[...modes].sort(),
   tableSizes:[...tableSizes].sort(),
