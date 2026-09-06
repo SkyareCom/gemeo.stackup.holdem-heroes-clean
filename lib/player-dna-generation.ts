@@ -6,7 +6,7 @@ export {describeSpot};
 type PriorAnswer={action:PlayerAction};
 const OPENING_COUNTER_KEY="stackup.player-dna.opening-matrix-counter.v1";
 const OPENING_OFFSET_PREFIX="stackup.player-dna.opening-matrix-offset.";
-const OPENING_MATRIX_SIZE=64;
+const OPENING_MATRIX_SIZE=16;
 
 function browserStorage(){return typeof window!=="undefined"&&typeof window.localStorage!=="undefined"}
 
@@ -27,9 +27,9 @@ function openingOffset(seed:number){
 
 /*
   O sampler central já impede fingerprints repetidas. Esta camada desloca o
-  ponto inicial de cada nova sessão por uma matriz de 64 estados para que o
-  PRIMEIRO spot também percorra streets, tamanhos de mesa, posições, stacks,
-  fases e arquétipos, em vez de começar sempre no mesmo quadrante do espaço.
+  ponto inicial de cada nova sessão por uma matriz de 16 estados para que o
+  PRIMEIRO spot percorra os quatro streets, os quatro tamanhos de mesa e os
+  oito arquétipos básicos sem começar sempre no mesmo quadrante do espaço.
   O offset fica preso ao seed da sessão, portanto re-renders não mudam a mão.
 */
 export function buildBalancedSpotSession(
