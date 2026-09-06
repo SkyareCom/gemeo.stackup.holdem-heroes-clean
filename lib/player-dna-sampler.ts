@@ -1,4 +1,5 @@
 import type {AnteFormat,CashProfile,GameMode,PlayerAction,PlayerDnaSpot,TournamentProfile} from "@/data/player-dna-spots";
+import {exactSpotFingerprint} from "@/lib/spot-identity";
 
 type Street=PlayerDnaSpot["street"];
 type StackBand="SHORT"|"MEDIUM"|"DEEP";
@@ -12,6 +13,8 @@ type TablePlayer=PlayerDnaSpot["players"][number];
 type ActionHistoryItem={position:string;action:string;value:number};
 type SpotWithHistory=PlayerDnaSpot&{actionHistory?:ActionHistoryItem[];heroToCall?:number;currentBet?:number};
 type PriorAnswer={action:PlayerAction};
+
+type SeenRegistry=Record<string,string>;
 
 export type SpotDimensions={street:Street;heroPosition:string;stackBand:StackBand;heads:Heads;positionState:PositionState;potType:PotType;theme:Theme;texture:Texture;sizing:Sizing;tournamentPhase:"EARLY"|"MID"|"BUBBLE"|"ITM"|"FT"|"NA";icm:boolean;ante:boolean;gameProfile:string;anteMode:AnteFormat};
 
@@ -29,6 +32,9 @@ const deckCards=ranks.flatMap(rank=>suits.map(suit=>`${rank}${suit}`));
 const holeCardCombinations=deckCards.flatMap((first,index)=>deckCards.slice(index+1).map(second=>[first,second] as const));
 const cashStacks=[40,60,80,100,150,200,300];
 const tournamentStacks=[8,12,18,25,35,50,75,100];
+const SEEN_REGISTRY_KEY="stackup.player-dna.seen-spots.v2";
+const LAUNCH_COUNTER_KEY="stackup.player-dna.launch-counter.v1";
+const SESSION_ID_PREFIX="stackup.player-dna.session-identity.";
 
 function roundAmount(value:number,mode:GameMode){if(value<=0)return 0;return mode==="TORNEIO"?Math.round(value*10)/10:Math.max(1,Math.round(value));}
 function has(spot:PlayerDnaSpot,text:string){return spot.scenario.some(x=>x.toUpperCase().includes(text));}
@@ -37,6 +43,18 @@ function hashText(value:string){let hash=2166136261;for(let i=0;i<value.length;i
 function makeRandom(seed:number){let state=(seed||1)>>>0;return()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296}}
 function take<T>(items:T[],random:()=>number){return items[Math.floor(random()*items.length)]}
 function deal(count:number,random:()=>number,excluded:string[]=[]){const deck=deckCards.filter(card=>!excluded.includes(card));const cards:string[]=[];while(cards.length<count){const index=Math.floor(random()*deck.length);cards.push(deck.splice(index,1)[0])}return cards}
+function browserStorage(){return typeof window!=="undefined"&&typeof window.localStorage!=="undefined"}
+function loadSeenRegistry():SeenRegistry{if(!browserStorage())return{};try{const raw=window.localStorage.getItem(SEEN_REGISTRY_KEY);const parsed=raw?JSON.parse(raw):{};return parsed&&typeof parsed==="object"&&!Array.isArray(parsed)?parsed:{}}catch{return{}}}
+function saveSeenRegistry(registry:SeenRegistry){if(!browserStorage())return;try{window.localStorage.setItem(SEEN_REGISTRY_KEY,JSON.stringify(registry))}catch{}}
+function sessionIdentity(seed:number){
+  if(!browserStorage())return`SSR-${seed}`;
+  const key=`${SESSION_ID_PREFIX}${seed}`;const existing=window.localStorage.getItem(key);if(existing)return existing;
+  let counter=0;try{counter=Number(window.localStorage.getItem(LAUNCH_COUNTER_KEY)??"0")||0}catch{}
+  counter+=1;const randomPart=typeof crypto!=="undefined"&&"randomUUID" in crypto?crypto.randomUUID():`${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  const identity=`L${counter}-${seed.toString(36)}-${randomPart}`;
+  try{window.localStorage.setItem(LAUNCH_COUNTER_KEY,String(counter));window.localStorage.setItem(key,identity)}catch{}
+  return identity;
+}
 
 export function describeSpot(spot:PlayerDnaSpot):SpotDimensions{
   const h=hero(spot);const maxAction=Math.max(0,...spot.players.filter(p=>!p.hero).map(p=>p.value));const stack=h.stack;
@@ -51,7 +69,7 @@ function bettingOrder(positions:string[],street:Street){
 }
 function blindContribution(position:string,street:Street){if(street!=="PREFLOP")return 0;if(position==="SB")return .5;if(position==="BB")return 1;return 0}
 
-function buildRealisticSequence(positions:string[],heroPosition:string,street:Street,stacks:Map<string,number>,pot:number,mode:GameMode,random:()=>number){
+function buildRealisticSequence(positions:string[],heroPosition:string,street:Street,stacks:Map<string,number>,pot:number,mode:GameMode,random:()=>number,archetype:number){
   const order=bettingOrder(positions,street);const heroIndex=order.indexOf(heroPosition);const beforeHero=heroIndex>=0?order.slice(0,heroIndex):[];
   const commitments=new Map<string,number>();positions.forEach(position=>commitments.set(position,blindContribution(position,street)));
   const actions=new Map<string,{action:string;value:number}>();const history:ActionHistoryItem[]=[];
@@ -66,13 +84,15 @@ function buildRealisticSequence(positions:string[],heroPosition:string,street:St
     if(toCall<=0){
       const canOpen=stack>committed;
       const aggressive=street==="PREFLOP"&&currentBet>0?"RAISE":"BET";
-      action=canOpen?take(["CHECK","CHECK","CHECK",aggressive],random):"CHECK";
+      const openChoices=archetype%8===1?["CHECK",aggressive,aggressive,aggressive]:archetype%8===7?["CHECK","CHECK","CHECK","CHECK",aggressive]:["CHECK","CHECK",aggressive];
+      action=canOpen?take(openChoices,random):"CHECK";
       if(action==="BET"){
-        const size=roundAmount(Math.max(1,pot*take([.25,.33,.5,.66,.75,1],random)),mode);
+        const sizes=archetype%8===6?[1,1.25,1.5,2]:[.25,.33,.5,.66,.75,1,1.25];
+        const size=roundAmount(Math.max(1,pot*take(sizes,random)),mode);
         target=Math.min(stack,Math.max(committed+1,size));
         lastFullRaise=Math.max(1,target-currentBet);currentBet=target;raisesReopened=true;
       }else if(action==="RAISE"){
-        const minTarget=currentBet+Math.max(lastFullRaise,1);const desired=roundAmount(currentBet*take([2.2,2.5,3,3.5],random),mode);
+        const minTarget=currentBet+Math.max(lastFullRaise,1);const desired=roundAmount(currentBet*take(archetype%8===1?[2.5,3,3.5,4]:[2.2,2.5,3,3.5],random),mode);
         target=Math.min(stack,Math.max(minTarget,desired));
         if(target>currentBet){lastFullRaise=target-currentBet;currentBet=target;raisesReopened=true}else action="CHECK";
       }
@@ -80,12 +100,17 @@ function buildRealisticSequence(positions:string[],heroPosition:string,street:St
       const minRaiseTarget=currentBet+Math.max(lastFullRaise,street==="PREFLOP"?1:currentBet||1);
       const canFullRaise=raisesReopened&&stack>=minRaiseTarget;
       const canJamRaise=stack>currentBet;
-      const options=canFullRaise?["FOLD","FOLD","CALL","CALL","RAISE","ALL-IN"]:canJamRaise?["FOLD","FOLD","CALL","CALL","ALL-IN"]:["FOLD","CALL","CALL"];
+      let options:string[];
+      if(archetype%8===2)options=canFullRaise?["CALL","RAISE","ALL-IN","ALL-IN","ALL-IN"]:canJamRaise?["CALL","ALL-IN","ALL-IN"]:["FOLD","CALL"];
+      else if(archetype%8===1)options=canFullRaise?["FOLD","CALL","RAISE","RAISE","ALL-IN"]:canJamRaise?["FOLD","CALL","ALL-IN"]:["FOLD","CALL"];
+      else if(archetype%8===3)options=canFullRaise?["FOLD","CALL","CALL","CALL","RAISE"]:canJamRaise?["FOLD","CALL","CALL","ALL-IN"]:["FOLD","CALL","CALL"];
+      else if(archetype%8===7)options=canFullRaise?["FOLD","FOLD","FOLD","CALL","RAISE"]:canJamRaise?["FOLD","FOLD","CALL","ALL-IN"]:["FOLD","FOLD","CALL"];
+      else options=canFullRaise?["FOLD","FOLD","CALL","CALL","RAISE","ALL-IN"]:canJamRaise?["FOLD","FOLD","CALL","CALL","ALL-IN"]:["FOLD","CALL","CALL"];
       action=take(options,random);
       if(action==="FOLD")target=committed;
       else if(action==="CALL")target=Math.min(stack,currentBet);
       else if(action==="RAISE"){
-        const multiplier=take(street==="PREFLOP"?[2.2,2.5,3]:[2,2.5,3],random);const desired=roundAmount(currentBet*multiplier,mode);
+        const multiplier=take(street==="PREFLOP"?[2.2,2.5,3,3.5,4]:[2,2.5,3,4],random);const desired=roundAmount(currentBet*multiplier,mode);
         target=Math.min(stack,Math.max(minRaiseTarget,desired));
         const increment=target-currentBet;if(increment>=lastFullRaise){lastFullRaise=increment;raisesReopened=true}currentBet=target;
       }else{
@@ -122,41 +147,56 @@ function buildRealisticSequence(positions:string[],heroPosition:string,street:St
   return{actions,history,currentBet,heroToCall,legalActions,commitments};
 }
 
-function variant(seed:PlayerDnaSpot,n:number,sessionSeed:number,adaptationKey:string,forcedHeroCards:readonly [string,string]):PlayerDnaSpot{
-  const random=makeRandom(hashText(`${seed.id}:${sessionSeed}:${n}:${adaptationKey}`));const street=streets[(n+Math.floor(random()*streets.length))%streets.length];const playerCount=tableSizes[(n+Math.floor(random()*tableSizes.length))%tableSizes.length];const positions=tablePositions[playerCount];
-  const heroPosition=positions[Math.floor(random()*positions.length)];const baseStack=take(seed.mode==="CASH"?cashStacks:tournamentStacks,random);const initialPot=roundAmount(seed.mode==="CASH"?2+random()*18:2+random()*12,seed.mode);
-  const stacks=new Map<string,number>();positions.forEach(position=>stacks.set(position,roundAmount(baseStack*(.62+random()*.9),seed.mode)));
-  const sequence=buildRealisticSequence(positions,heroPosition,street,stacks,initialPot,seed.mode,random);
+function variant(seed:PlayerDnaSpot,n:number,sessionSeed:number,identitySalt:string,adaptationKey:string,forcedHeroCards:readonly [string,string]):PlayerDnaSpot{
+  const random=makeRandom(hashText(`${seed.id}:${sessionSeed}:${identitySalt}:${n}:${adaptationKey}`));
+  const street=streets[n%streets.length];
+  const playerCount=tableSizes[Math.floor(n/streets.length)%tableSizes.length];
+  const positions=tablePositions[playerCount];
+  const heroPosition=positions[(Math.floor(n/(streets.length*tableSizes.length))+Math.floor(random()*positions.length))%positions.length];
+  const stackPool=seed.mode==="CASH"?cashStacks:tournamentStacks;
+  const baseStack=stackPool[(n+Math.floor(random()*stackPool.length))%stackPool.length];
+  const initialPot=roundAmount(seed.mode==="CASH"?2+random()*24:2+random()*16,seed.mode);
+  const stacks=new Map<string,number>();positions.forEach((position,index)=>stacks.set(position,roundAmount(baseStack*(.55+random()*1.15)+(index%3)*.5,seed.mode)));
+  const archetype=n%8;
+  const sequence=buildRealisticSequence(positions,heroPosition,street,stacks,initialPot,seed.mode,random,archetype);
   const players:TablePlayer[]=positions.map(position=>{const isHero=position===heroPosition;const prior=sequence.actions.get(position);return{position,stack:stacks.get(position)??baseStack,action:isHero?"---":prior?.action??"---",value:isHero?0:prior?.value??0,...(isHero?{hero:true}:{})}});
   const boardCount=street==="PREFLOP"?0:street==="FLOP"?3:street==="TURN"?4:5;const heroCards=forcedHeroCards.join(" ");const board=deal(boardCount,random,[...forcedHeroCards]).join(" ")||undefined;
   const committed=sequence.history.reduce((sum,item)=>sum+item.value,0);const main=roundAmount(initialPot+committed,seed.mode);
   const allInCommitments=sequence.history.filter(item=>item.action==="ALL-IN").map(item=>item.value).sort((a,b)=>a-b);let sides:PlayerDnaSpot["pot"]["sides"];
   if(allInCommitments.length){const cap=allInCommitments[0];const above=sequence.history.filter(item=>item.action!=="FOLD"&&item.value>cap);if(above.length>=2){const sideValue=roundAmount(above.reduce((sum,item)=>sum+(item.value-cap),0),seed.mode);if(sideValue>0)sides=[{value:sideValue,players:[heroPosition,...above.map(item=>item.position)]}]}}
-  const cashProfiles:CashProfile[]=["MICRO STAKES","MID STAKES","HIGH STAKES"];const tournamentProfiles:TournamentProfile[]=["MTT REGULAR","BOUNTY","HIGH ROLLER","TURBO"];const tournamentPhases=["EARLY GAME","MID GAME","BOLHA","ITM","FT"];const themes=["THIN VALUE","BLUFF CATCH","BLIND WAR","SQUEEZE","DRAW","PRESSURE","STANDARD"];const anteModes:AnteFormat[]=["NONE","BB_ANTE","BB_PL"];
-  const gameProfile=seed.mode==="CASH"?take(cashProfiles,random):take(tournamentProfiles,random);const tournamentPhase=take(tournamentPhases,random);const theme=take(themes,random);const anteMode:AnteFormat=seed.mode==="TORNEIO"?take(anteModes,random):"NONE";
+  const cashProfiles:CashProfile[]=["MICRO STAKES","MID STAKES","HIGH STAKES"];const tournamentProfiles:TournamentProfile[]=["MTT REGULAR","BOUNTY","HIGH ROLLER","TURBO"];const tournamentPhases=["EARLY GAME","MID GAME","BOLHA","ITM","FT"];const anteModes:AnteFormat[]=["NONE","BB_ANTE","BB_PL"];
+  const gameProfile=seed.mode==="CASH"?cashProfiles[n%cashProfiles.length]:tournamentProfiles[n%tournamentProfiles.length];
+  const tournamentPhase=tournamentPhases[n%tournamentPhases.length];
+  const anteMode:AnteFormat=seed.mode==="TORNEIO"?anteModes[Math.floor(n/tournamentPhases.length)%anteModes.length]:"NONE";
   const fallback=seed.weights.CALL??seed.weights.CHECK??Object.values(seed.weights)[0];const aggressive=seed.weights.RAISE??seed.weights.BET??seed.weights["ALL-IN"]??fallback;const weights={FOLD:seed.weights.FOLD??fallback,CHECK:seed.weights.CHECK??fallback,CALL:seed.weights.CALL??fallback,BET:seed.weights.BET??aggressive,RAISE:seed.weights.RAISE??aggressive,"ALL-IN":seed.weights["ALL-IN"]??aggressive};
-  const boardCards=board?.split(" ")??[];const texture=boardCards.length&&new Set(boardCards.map(card=>card.slice(1))).size===1?"MONOTONE":boardCards.length&&new Set(boardCards.map(card=>card[0])).size<boardCards.length?"PAIRED":board?"BOARD VARIADO":"PREFLOP";const phaseTags=seed.mode==="TORNEIO"?[tournamentPhase,...(["BOLHA","FT"].includes(tournamentPhase)?[`${tournamentPhase} ICM`]:[])]:[];
-  const activePositions=players.filter(player=>player.hero||player.action!=="FOLD").map(player=>player.position);const matchup=activePositions.length>6?`${heroPosition} VS MESA`:activePositions.join(" VS ");const scenario=[seed.mode,String(gameProfile),`${playerCount}-MAX`,...phaseTags,street,texture,theme,activePositions.length>2?"MULTIWAY":"HEADS-UP",matchup,heroPosition==="BTN"||heroPosition==="CO"?"IP":"OOP"];
+  const boardCards=board?.split(" ")??[];const boardSuits=boardCards.map(card=>card.slice(1));const boardRanks=boardCards.map(card=>card[0]);const monotone=boardCards.length>=3&&new Set(boardSuits).size===1;const paired=boardCards.length>=3&&new Set(boardRanks).size<boardRanks.length;const connected=boardCards.length>=3&&/([TJQK9].*){2}/.test(boardCards.join(""));const texture=street==="PREFLOP"?"PREFLOP":monotone?"MONOTONE":paired?"PAIRED":connected?"CONNECTED":"BOARD VARIADO";
+  const raiseCount=sequence.history.filter(item=>item.action==="RAISE").length;const allIn=sequence.history.some(item=>item.action==="ALL-IN");const squeeze=street==="PREFLOP"&&sequence.history.some((item,index)=>item.action==="RAISE"&&sequence.history.slice(0,index).some(previous=>previous.action==="CALL"));const activePositions=players.filter(player=>player.hero||player.action!=="FOLD").map(player=>player.position);const blindWar=activePositions.length<=2&&activePositions.every(position=>position==="SB"||position==="BB");const maxAction=Math.max(0,...sequence.history.map(item=>item.value));const overbet=street!=="PREFLOP"&&main>0&&maxAction/main>1;
+  const potTag=street==="PREFLOP"?(raiseCount>=3?"4-BET POT":raiseCount===2?"3-BET POT":raiseCount===1?"SRP":"LIMPED / UNOPENED"):"POSTFLOP";
+  const strategicTag=allIn?"ALL-IN":squeeze?"SQUEEZE":blindWar?"BLIND WAR":overbet?"OVERBET":archetype===3?"BLUFF CATCH":archetype===1?"PRESSURE":"STANDARD";
+  const phaseTags=seed.mode==="TORNEIO"?[tournamentPhase,...(["BOLHA","FT"].includes(tournamentPhase)?[`${tournamentPhase} ICM`]:[]),...(anteMode!=="NONE"?[anteMode==="BB_ANTE"?"BB ANTE":"ANTE POR JOGADOR"]:[])]:[];
+  const matchup=activePositions.length>6?`${heroPosition} VS MESA`:activePositions.join(" VS ");const scenario=[seed.mode,String(gameProfile),`${playerCount}-MAX`,...phaseTags,street,texture,potTag,strategicTag,activePositions.length>2?"MULTIWAY":"HEADS-UP",matchup,heroPosition==="BTN"||heroPosition==="CO"?"IP":"OOP"];
   const last=sequence.history.at(-1);const lastActor=last?.position??"MESA";const stateText=sequence.heroToCall>0?`ENFRENTA ${roundAmount(sequence.heroToCall,seed.mode)} BB`:`TEM AÇÃO LIVRE`;const prompt=`MESA ${playerCount}-MAX: O HERÓI ESTÁ EM ${heroPosition} NO ${street}. ${stateText}. ÚLTIMA AÇÃO: ${last?.action??"---"} DE ${lastActor}.`;
-  return {...seed,id:`${seed.id}-${sessionSeed.toString(36)}-${hashText(adaptationKey).toString(36)}-v${n}`,street,heroCards,board,players,pot:{main,sides},scenario,prompt,actions:sequence.legalActions,weights,gameProfile,anteMode,actionHistory:sequence.history,heroToCall:sequence.heroToCall,currentBet:sequence.currentBet} as SpotWithHistory;
+  return {...seed,id:`${seed.id}-${hashText(identitySalt).toString(36)}-${sessionSeed.toString(36)}-${hashText(adaptationKey).toString(36)}-v${n}`,street,heroCards,board,players,pot:{main,sides},scenario,prompt,actions:sequence.legalActions,weights,gameProfile,anteMode,actionHistory:sequence.history,heroToCall:sequence.heroToCall,currentBet:sequence.currentBet} as SpotWithHistory;
 }
 
 function stableShuffle<T>(items:T[],seed:number){const out=[...items];let x=(seed||1)>>>0;for(let i=out.length-1;i>0;i--){x=(x*1664525+1013904223)>>>0;const j=x%(i+1);[out[i],out[j]]=[out[j],out[i]]}return out}
-function handClass(cards:readonly [string,string]){const first=cards[0][0],second=cards[1][0];if(first===second)return `${first}${second}`;const ordered=ranks.indexOf(first)<ranks.indexOf(second)?[first,second]:[second,first];return `${ordered[0]}${ordered[1]}${cards[0].slice(1)===cards[1].slice(1)?"S":"O"}`}
+function handClass(cards:readonly [string,string]){const first=cards[0][0],second=cards[1][0];if(first===second)return`${first}${second}`;const ordered=ranks.indexOf(first)<ranks.indexOf(second)?[first,second]:[second,first];return`${ordered[0]}${ordered[1]}${cards[0].slice(1)===cards[1].slice(1)?"S":"O"}`}
 function balancedHandOrder(seed:number){const groups=new Map<string,Array<readonly [string,string]>>();holeCardCombinations.forEach(cards=>{const key=handClass(cards);groups.set(key,[...(groups.get(key)??[]),cards])});const classOrder=stableShuffle([...groups.keys()],seed);const shuffledGroups=new Map(classOrder.map((key,index)=>[key,stableShuffle(groups.get(key)??[],seed^(index*2654435761))]));const ordered:Array<readonly [string,string]>=[];for(let round=0;round<12;round++)classOrder.forEach(key=>{const cards=shuffledGroups.get(key)?.[round];if(cards)ordered.push(cards)});return ordered}
 function keyEntries(d:SpotDimensions){return[`street:${d.street}`,`pos:${d.heroPosition}`,`stack:${d.stackBand}`,`heads:${d.heads}`,`state:${d.positionState}`,`pot:${d.potType}`,`theme:${d.theme}`,`texture:${d.texture}`,`sizing:${d.sizing}`,`phase:${d.tournamentPhase}`,`icm:${d.icm}`,`ante:${d.ante}`,`profile:${d.gameProfile}`,`ante-mode:${d.anteMode}`]}
 function adaptationKey(answers:PriorAnswer[]){return answers.map(answer=>answer.action).join("|")||"START"}
-function semanticSpotKey(spot:PlayerDnaSpot){const dimensions=describeSpot(spot);const heroPosition=hero(spot).position;const history=(spot as SpotWithHistory).actionHistory??spot.players.filter(player=>!player.hero&&player.action!=="---").map(player=>({position:player.position,action:player.action,value:player.value}));const actionSequence=history.map(item=>`${item.position}:${item.action}:${item.value}`).join(">");const phase=spot.scenario.find(item=>["EARLY GAME","MID GAME","BOLHA","ITM","FT"].includes(item))??"NA";const table=spot.scenario.find(item=>item.endsWith("-MAX"))??`${spot.players.length}-MAX`;return[spot.mode,spot.street,spot.gameProfile,spot.anteMode,table,phase,heroPosition,dimensions.stackBand,dimensions.positionState,dimensions.potType,dimensions.theme,dimensions.texture,dimensions.sizing,spot.pot.sides?.length?"SIDE":"MAIN",actionSequence].join("|")}
 function adaptiveBias(d:SpotDimensions,answers:PriorAnswer[]){if(answers.length<3)return 0;const aggressive=answers.filter(answer=>["BET","RAISE","ALL-IN"].includes(answer.action)).length/answers.length;const passive=answers.filter(answer=>["FOLD","CHECK","CALL"].includes(answer.action)).length/answers.length;let score=0;if(aggressive>=.5){if(["BLUFF-CATCH","PRESSURE","ALL-IN"].includes(d.theme))score-=5;if(d.positionState==="OOP")score-=2;if(d.icm)score-=2}if(passive>=.55){if(["VALUE","DRAW","BLIND-WAR","SQUEEZE"].includes(d.theme))score-=5;if(d.positionState==="IP")score-=2}return score}
 
 export function buildBalancedSpotSession(bank:PlayerDnaSpot[],mode:GameMode,count:number,seed=Date.now(),answers:PriorAnswer[]=[]):PlayerDnaSpot[]{
-  const seeds=bank.filter(s=>s.mode===mode);if(!seeds.length||count<=0)return[];const selected:PlayerDnaSpot[]=[];const counts=new Map<string,number>();const semanticKeys=new Set<string>();const templateOrder=stableShuffle(seeds,seed);const handCycles=new Map<number,Array<readonly [string,string]>>();
+  const seeds=bank.filter(s=>s.mode===mode);if(!seeds.length||count<=0)return[];
+  const identity=sessionIdentity(seed);const registry=loadSeenRegistry();const blocked=new Set(Object.entries(registry).filter(([,owner])=>owner!==identity).map(([fingerprint])=>fingerprint));
+  const selected:PlayerDnaSpot[]=[];const selectedFingerprints:string[]=[];const counts=new Map<string,number>();const sessionKeys=new Set<string>();const templateOrder=stableShuffle(seeds,seed^hashText(identity));const handCycles=new Map<number,Array<readonly [string,string]>>();
   for(let slot=0;slot<count;slot++){
-    const prior=answers.slice(0,slot);const key=adaptationKey(prior);const handCycle=Math.floor(slot/holeCardCombinations.length);let handOrder=handCycles.get(handCycle);if(!handOrder){handOrder=balancedHandOrder(seed^(handCycle*0x9e3779b9));handCycles.set(handCycle,handOrder)}const forcedHeroCards=handOrder[slot%holeCardCombinations.length];let pick:PlayerDnaSpot|null=null;let bestScore=Infinity;let uniqueCandidates=0;
-    for(let candidate=0;candidate<256&&uniqueCandidates<32;candidate++){
-      const ordinal=slot*256+candidate;const template=templateOrder[(slot+candidate)%templateOrder.length];const generated=variant(template,ordinal,seed,key,forcedHeroCards);const semanticKey=semanticSpotKey(generated);if(semanticKeys.has(semanticKey))continue;uniqueCandidates++;const dimensions=describeSpot(generated);const balanceScore=keyEntries(dimensions).reduce((sum,item)=>sum+(counts.get(item)??0),0);const score=balanceScore+adaptiveBias(dimensions,prior);if(score<bestScore){bestScore=score;pick=generated}
+    const prior=answers.slice(0,slot);const key=adaptationKey(prior);const handCycle=Math.floor(slot/holeCardCombinations.length);let handOrder=handCycles.get(handCycle);if(!handOrder){handOrder=balancedHandOrder(seed^(handCycle*0x9e3779b9)^hashText(identity));handCycles.set(handCycle,handOrder)}const forcedHeroCards=handOrder[slot%holeCardCombinations.length];let pick:PlayerDnaSpot|null=null;let pickFingerprint="";let bestScore=Infinity;let uniqueCandidates=0;
+    for(let candidate=0;candidate<1024&&uniqueCandidates<96;candidate++){
+      const ordinal=slot*1024+candidate;const template=templateOrder[(slot+candidate)%templateOrder.length];const generated=variant(template,ordinal,seed,identity,key,forcedHeroCards);const fingerprint=exactSpotFingerprint(generated);if(sessionKeys.has(fingerprint)||blocked.has(fingerprint))continue;uniqueCandidates++;const dimensions=describeSpot(generated);const balanceScore=keyEntries(dimensions).reduce((sum,item)=>sum+(counts.get(item)??0),0);const score=balanceScore+adaptiveBias(dimensions,prior);if(score<bestScore){bestScore=score;pick=generated;pickFingerprint=fingerprint}
     }
-    if(!pick)break;selected.push(pick);semanticKeys.add(semanticSpotKey(pick));keyEntries(describeSpot(pick)).forEach(k=>counts.set(k,(counts.get(k)??0)+1));
+    if(!pick)break;selected.push(pick);selectedFingerprints.push(pickFingerprint);sessionKeys.add(pickFingerprint);keyEntries(describeSpot(pick)).forEach(k=>counts.set(k,(counts.get(k)??0)+1));
   }
+  if(browserStorage()&&selectedFingerprints.length){selectedFingerprints.forEach(fingerprint=>registry[fingerprint]=identity);saveSeenRegistry(registry)}
   return selected;
 }
