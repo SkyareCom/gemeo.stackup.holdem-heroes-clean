@@ -1,0 +1,165 @@
+/* FINAL RESTORED PLAYER DNA STATE — 2026-09-06
+ * CONSOLIDATES THE LAST APPROVED TRAINING-SCREEN RULES AFTER THE REGRESSION.
+ */
+
+html body .player-dna-page,
+html body .player-dna-page .profile-panel,
+html body .player-dna-page .training-session,
+html body .player-dna-page .training-session>section{
+  background:#030806!important;
+  background-image:none!important;
+}
+
+html body .player-dna-page .training-session{
+  gap:4px!important;
+}
+
+html body .player-dna-page [aria-label="MESA DE POKER ANIMADA PLAYER DNA"]{
+  margin-top:4px!important;
+  margin-bottom:0!important;
+  padding:0!important;
+}
+
+html body .player-dna-page .fixed-player-actions{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:5px!important;
+  width:100%!important;
+  margin:4px 0 0!important;
+}
+
+html body .player-dna-page .fixed-player-actions>button,
+html body .player-dna-page .player-footer-controls>button{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  height:44px!important;
+  min-height:44px!important;
+  max-height:44px!important;
+  padding:6px 8px!important;
+  box-sizing:border-box!important;
+  border:1px solid #255000!important;
+  border-radius:12px!important;
+  background:transparent!important;
+  text-align:center!important;
+  overflow:hidden!important;
+}
+
+html body .player-dna-page .fixed-player-actions>button{
+  color:#ede6db!important;
+  -webkit-text-fill-color:#ede6db!important;
+  font-size:11px!important;
+}
+
+html body .player-dna-page .fixed-player-actions>button[aria-pressed="true"]{
+  border-color:#ede6db!important;
+  box-shadow:inset 0 0 0 1px #ede6db!important;
+  color:#009929!important;
+  -webkit-text-fill-color:#009929!important;
+}
+
+html body .player-dna-page .fixed-player-actions>button:disabled,
+html body .player-dna-page .player-footer-controls>button:disabled{
+  opacity:.28!important;
+}
+
+html body .player-dna-page .player-comment-card{
+  display:grid!important;
+  grid-template-rows:36px 24px!important;
+  width:100%!important;
+  height:60px!important;
+  min-height:60px!important;
+  max-height:60px!important;
+  margin-top:5px!important;
+  padding:0!important;
+  border:1px solid #255000!important;
+  border-radius:12px!important;
+  background:transparent!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+
+html body .player-dna-page .player-comment-card .comment-line{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:0!important;
+  height:36px!important;
+  padding:3px 10px!important;
+  color:#ede6db!important;
+  -webkit-text-fill-color:#ede6db!important;
+  font-size:10px!important;
+  line-height:1.1!important;
+  text-align:center!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+  overflow-wrap:anywhere!important;
+}
+
+html body .player-dna-page .player-comment-card .gto-line{
+  height:24px!important;
+  min-height:0!important;
+  padding:1px 4px!important;
+  overflow:hidden!important;
+}
+
+html body .player-dna-page .player-comment-card.awaiting-comment{
+  animation:restoredHeroCommentBlink 1.05s ease-in-out infinite!important;
+}
+
+html body .player-dna-page .player-comment-card.awaiting-comment .comment-line{
+  grid-row:1 / 3!important;
+  height:60px!important;
+  border-bottom:0!important;
+  font-size:11px!important;
+}
+
+html body .player-dna-page .player-comment-card.awaiting-comment .gto-line{
+  display:none!important;
+}
+
+@keyframes restoredHeroCommentBlink{
+  0%,100%{opacity:1}
+  50%{opacity:.38}
+}
+
+html body .player-dna-page .player-footer-controls{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;
+  width:100%!important;
+  margin-top:5px!important;
+}
+
+html body .player-dna-page .player-footer-controls>button{
+  color:#009929!important;
+  -webkit-text-fill-color:#009929!important;
+  font-size:11px!important;
+}
+
+html body .player-dna-page .training-session button,
+html body .player-dna-page .training-session a,
+html body .player-dna-page .training-session span,
+html body .player-dna-page .training-session strong,
+html body .player-dna-page .training-session small,
+html body .player-dna-page .training-session p,
+html body .player-dna-page .training-session h4{
+  text-transform:uppercase!important;
+}
+
+@media(max-width:800px){
+  html body .player-dna-page .fixed-player-actions{
+    gap:5px!important;
+  }
+  html body .player-dna-page .fixed-player-actions>button,
+  html body .player-dna-page .player-footer-controls>button{
+    height:44px!important;
+    min-height:44px!important;
+    max-height:44px!important;
+    padding:5px 4px!important;
+    font-size:10px!important;
+  }
+}
