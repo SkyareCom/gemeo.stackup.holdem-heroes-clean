@@ -36,11 +36,11 @@ jobs:
             --exclude='.git/' \
             --exclude='.deploy-trigger' \
             --exclude='.deploy-trigger-*' \
+            --exclude='.github/workflows/' \
             --exclude='source/' \
             source/ ./
           rm -rf source
           sed -i 's/const repo = "gemeo.stackup.holdem-heroes";/const repo = "gemeo.stackup.holdem-heroes-clean";/' next.config.mjs
-          rm -f .github/workflows/migrate-clean.yml
 
       - name: Commit clean snapshot
         shell: bash
