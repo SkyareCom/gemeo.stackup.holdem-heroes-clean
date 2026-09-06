@@ -23,6 +23,9 @@
       }
     ],
     "paths": {
+      "@/lib/player-dna-sampler": [
+        "./lib/player-dna-generation.ts"
+      ],
       "@/*": [
         "./*"
       ]
