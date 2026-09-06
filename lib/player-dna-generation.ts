@@ -1,5 +1,5 @@
 import type {GameMode,PlayerAction,PlayerDnaSpot} from "@/data/player-dna-spots";
-import {buildBalancedSpotSession as buildCoreSession,describeSpot} from "@/lib/player-dna-sampler";
+import {buildBalancedSpotSession as buildCoreSession,describeSpot} from "./player-dna-sampler";
 
 export {describeSpot};
 
