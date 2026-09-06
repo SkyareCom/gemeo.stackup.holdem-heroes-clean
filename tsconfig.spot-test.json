@@ -14,6 +14,7 @@
   },
   "include": [
     "tests/spot-generation-stress.ts",
+    "lib/player-dna-generation.ts",
     "lib/player-dna-sampler.ts",
     "lib/spot-identity.ts",
     "data/player-dna-spots.ts"
