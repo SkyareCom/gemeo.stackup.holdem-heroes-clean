@@ -1,4 +1,4 @@
-import {buildBalancedSpotSession,describeSpot} from "../lib/player-dna-sampler";
+import {buildBalancedSpotSession,describeSpot} from "../lib/player-dna-generation";
 import {exactSpotFingerprint} from "../lib/spot-identity";
 import {playerDnaSpots,type GameMode} from "../data/player-dna-spots";
 
