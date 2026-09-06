@@ -2,11 +2,13 @@ import Link from "next/link";
 import PlayerDnaWorkspace from "@/components/PlayerDnaWorkspace";
 import PlayerDnaFinalController from "@/components/PlayerDnaFinalController";
 import PlayerDnaVisualFixes from "@/components/PlayerDnaVisualFixes";
+import PlayerDnaAiSpotReplenisher from "@/components/PlayerDnaAiSpotReplenisher";
 import "./player-dna-typography.css";
 import "./restored-latest.css";
 
 export default function PlayerDnaPage(){
   return <main className="module-page player-dna-page">
+    <PlayerDnaAiSpotReplenisher/>
     <PlayerDnaFinalController/>
     <PlayerDnaVisualFixes/>
     <nav className="module-navigation player-dna-navigation" aria-label="NAVEGAÇÃO DO MÓDULO">
