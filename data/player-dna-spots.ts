@@ -4,6 +4,7 @@ export type TournamentProfile="MTT REGULAR"|"BOUNTY"|"HIGH ROLLER"|"TURBO";
 export type AnteFormat="NONE"|"BB_ANTE"|"BB_PL";
 export type PlayerAction="FOLD"|"CHECK"|"CALL"|"BET"|"RAISE"|"ALL-IN";
 export type Score={aggression:number;discipline:number;pressure:number;passivity:number};
+export type PlayerActionHistory={position:string;action:string;value:number};
 export type PlayerDnaSpot={
   id:string;
   mode:GameMode;
@@ -18,6 +19,15 @@ export type PlayerDnaSpot={
   prompt:string;
   actions:PlayerAction[];
   weights:Partial<Record<PlayerAction,Score>>;
+  actionHistory?:PlayerActionHistory[];
+  heroToCall?:number;
+  currentBet?:number;
+  legalActions?:PlayerAction[];
+  rakePct?:number;
+  anteBb?:number;
+  payouts?:number[];
+  fieldStacks?:number[];
+  bounties?:number[];
 };
 
 const passive:Score={aggression:0,discipline:1,pressure:0,passivity:3};
@@ -35,7 +45,6 @@ export const playerDnaSpots:PlayerDnaSpot[]=[
   {id:"cash-river-value",mode:"CASH",street:"RIVER",heroCards:"Q♠ J♠",board:"Q♥ 7♦ 4♠ 2♣ 6♣",players:[{position:"BTN",stack:58,action:"AGUARDA",value:0,hero:true},{position:"BB",stack:50,action:"CHECK",value:0}],pot:{main:36},scenario:["CASH","BTN VS BB","THIN VALUE","IP"],prompt:"Vilão dá check river. Você tem top pair e ação.",actions:["CHECK","BET","RAISE","ALL-IN"],weights:{CHECK:call,BET:aggressive,RAISE:pressure,"ALL-IN":pressure}},
   {id:"cash-river-overbet",mode:"CASH",street:"RIVER",heroCards:"K♥ Q♥",board:"K♣ 9♦ 5♠ 4♥ 2♦",players:[{position:"BB",stack:72,action:"AGUARDA",value:0,hero:true},{position:"BTN",stack:68,action:"OVERBET",value:52}],pot:{main:90},scenario:["CASH","BTN VS BB","OVERBET","BLUFF CATCH"],prompt:"Vilão usa overbet no river. Você segura top pair Q kicker.",actions:["FOLD","CALL","RAISE","ALL-IN"],weights:{FOLD:disciplined,CALL:call,RAISE:aggressive,"ALL-IN":pressure}},
   {id:"cash-side-pot",mode:"CASH",street:"TURN",heroCards:"J♠ J♥",board:"J♦ 8♣ 4♣ 2♥",players:[{position:"CO",stack:80,action:"AGUARDA",value:0,hero:true},{position:"BTN",stack:24,action:"ALL-IN",value:24},{position:"SB",stack:70,action:"CALL",value:24}],pot:{main:72,sides:[{value:28,players:["CO","SB"]}]},scenario:["CASH","MULTIWAY","SIDE POT","CO VS BTN VS SB"],prompt:"Há all-in e side pot possível no turn. Qual linha você escolhe?",actions:["FOLD","CALL","RAISE","ALL-IN"],weights:{FOLD:passive,CALL:call,RAISE:aggressive,"ALL-IN":pressure}},
-
   {id:"mtt-early-open",mode:"TORNEIO",street:"PREFLOP",heroCards:"A♠ K♠",players:[{position:"UTG",stack:80,action:"AGUARDA",value:0,hero:true},{position:"CO",stack:76,action:"CALL",value:2.2},{position:"SB",stack:64,action:"RAISE",value:9}],pot:{main:13.5},scenario:["TORNEIO","EARLY GAME","ANTE 0.1 BB","UTG VS CO VS SB","MULTIWAY"],prompt:"Early game com antes: há call e squeeze após sua abertura.",actions:["FOLD","CALL","RAISE","ALL-IN"],weights:{FOLD:disciplined,CALL:call,RAISE:aggressive,"ALL-IN":pressure}},
   {id:"mtt-mid-blind-war",mode:"TORNEIO",street:"PREFLOP",heroCards:"A♣ 7♣",players:[{position:"SB",stack:32,action:"AGUARDA",value:0,hero:true},{position:"BB",stack:27,action:"RAISE",value:5.5}],pot:{main:8},scenario:["TORNEIO","MID GAME","ANTE 0.1 BB","BLIND WAR","SB VS BB"],prompt:"Mid game: blind war com stacks médios. Qual resposta?",actions:["FOLD","CALL","RAISE","ALL-IN"],weights:{FOLD:disciplined,CALL:call,RAISE:aggressive,"ALL-IN":pressure}},
   {id:"mtt-bubble-btn",mode:"TORNEIO",street:"PREFLOP",heroCards:"A♦ T♠",players:[{position:"BTN",stack:22,action:"AGUARDA",value:0,hero:true},{position:"CO",stack:14,action:"ALL-IN",value:14}],pot:{main:17},scenario:["TORNEIO","BOLHA","BOLHA ICM","ANTE 0.1 BB","CO VS BTN"],prompt:"Na bolha, CO short empurra e você está no BTN com cobertura.",actions:["FOLD","CALL","RAISE","ALL-IN"],weights:{FOLD:disciplined,CALL:call,RAISE:aggressive,"ALL-IN":pressure}},
