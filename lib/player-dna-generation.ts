@@ -4,6 +4,8 @@ import {buildBalancedSpotSession as buildCoreSession,describeSpot} from "./playe
 export {describeSpot};
 
 type PriorAnswer={action:PlayerAction};
+type SpotWithLegalActions=PlayerDnaSpot&{legalActions?:PlayerAction[]};
+const ALL_ACTIONS:PlayerAction[]=["FOLD","CHECK","CALL","BET","RAISE","ALL-IN"];
 const OPENING_COUNTER_KEY="stackup.player-dna.opening-matrix-counter.v1";
 const OPENING_OFFSET_PREFIX="stackup.player-dna.opening-matrix-offset.";
 const OPENING_MATRIX_SIZE=16;
@@ -31,6 +33,11 @@ function openingOffset(seed:number){
   PRIMEIRO spot percorra os quatro streets, os quatro tamanhos de mesa e os
   oito arquétipos básicos sem começar sempre no mesmo quadrante do espaço.
   O offset fica preso ao seed da sessão, portanto re-renders não mudam a mão.
+
+  REGRA DE UX DO PLAYER DNA: AS SEIS AÇÕES DEVEM SEMPRE SER MOSTRADAS AO
+  USUÁRIO, SEM ENTREGAR QUAIS SÃO AS AÇÕES LEGAIS/RECOMENDADAS DO SPOT.
+  O CONJUNTO LEGAL REAL É PRESERVADO EM legalActions EXCLUSIVAMENTE PARA O
+  MOTOR DE DIAGNÓSTICO JULGAR A ESCOLHA DEPOIS DA RESPOSTA.
 */
 export function buildBalancedSpotSession(
   bank:PlayerDnaSpot[],
@@ -43,5 +50,9 @@ export function buildBalancedSpotSession(
   const offset=openingOffset(seed);
   const padding:PriorAnswer[]=Array.from({length:offset},()=>({action:"CHECK" as PlayerAction}));
   const generated=buildCoreSession(bank,mode,count+offset,seed,[...padding,...answers]);
-  return generated.slice(offset,offset+count);
+  return generated.slice(offset,offset+count).map(spot=>{
+    const original=spot as SpotWithLegalActions;
+    const legalActions=[...(original.legalActions??spot.actions)];
+    return {...spot,actions:[...ALL_ACTIONS],legalActions} as SpotWithLegalActions;
+  });
 }
