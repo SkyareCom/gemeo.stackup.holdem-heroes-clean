@@ -25,7 +25,7 @@ export default function PlayerDnaAnalysisRuntimeFix(){
         lines[3].textContent=solver.verdict==="CORRETA"?"AÇÃO CORRETA (+EV)":solver.verdict==="MISTA"?"AÇÃO AJUSTÁVEL (MISTA / EV NEUTRO)":"AÇÃO INCORRETA (-EV)";
         const rows=solver.actionMix.slice(0,4);for(let i=0;i<4;i++){const row=rows[i];lines[4+i].textContent=row?`${row.action} ${row.frequency}% · ${row.classification} · EV ${row.evBb} BB`:"---"}card.dataset.analysisSource="VALIDATED_SOLVER_REFERENCE";
       }else{
-        const legal=spot.legalActions??spot.actions;const technical=analyzeTechnicalDecision(state,selectedAction,legal.length?legal:[selectedAction]);lines[3].textContent=technical.verdict;lines[4].textContent=technical.summary;lines[5].textContent=`POT ODDS ${technical.potOdds}% · SPR ${technical.spr}`;lines[6].textContent=`CONTEXTO ${state.street} · ${state.scenario.includes("MULTIWAY")?"MULTIWAY":"HEADS-UP"}`;lines[7].textContent="SEM FREQUÊNCIAS/EV GTO: EXIGE REFERÊNCIA SOLVER EXATA VALIDADA";card.dataset.analysisSource="STACKUP_TECHNICAL_BASELINE";
+        const legal=spot.legalActions??spot.actions;const technical=analyzeTechnicalDecision(state,selectedAction,legal.length?legal:[selectedAction]);lines[3].textContent=technical.verdict;lines[4].textContent=technical.summary;lines[5].textContent=`POT ODDS ${technical.potOdds}% · SPR ${technical.spr}`;lines[6].textContent=`ANÁLISE GTO DIAGNÓSTICA · ${state.street} · ${state.scenario.includes("MULTIWAY")?"MULTIWAY":"HEADS-UP"}`;lines[7].textContent="BASE TEÓRICA DE SOLVERS + MATEMÁTICA DO SPOT · SEM DEPENDÊNCIA DE BANCO DE DADOS";card.dataset.analysisSource="STACKUP_GTO_DIAGNOSTIC";
       }
       window.setTimeout(()=>{busy=false},0)
     };
