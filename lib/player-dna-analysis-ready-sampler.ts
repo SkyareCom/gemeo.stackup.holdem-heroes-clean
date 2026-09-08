@@ -16,8 +16,21 @@ function saveSelection(mode:GameMode,seed:number,fingerprints:string[]){if(!brow
 function hashText(value:string){let hash=2166136261;for(let i=0;i<value.length;i++){hash^=value.charCodeAt(i);hash=Math.imul(hash,16777619)}return hash>>>0}
 function dimensionKeys(spot:PlayerDnaSpot){const d=describeSpot(spot);return[`street:${d.street}`,`pos:${d.heroPosition}`,`stack:${d.stackBand}`,`heads:${d.heads}`,`state:${d.positionState}`,`pot:${d.potType}`,`theme:${d.theme}`,`texture:${d.texture}`,`sizing:${d.sizing}`,`phase:${d.tournamentPhase}`,`icm:${d.icm}`,`ante:${d.ante}`,`profile:${d.gameProfile}`,`ante-mode:${d.anteMode}`]}
 
+function trainingSafe(spot:PlayerDnaSpot){
+  if(!spot.id||!spot.heroCards||!spot.players?.length||!spot.actions?.length)return false;
+  if(!spot.players.some(player=>player.hero))return false;
+  if(!Number.isFinite(spot.pot?.main)||spot.pot.main<=0)return false;
+  const cards=[...spot.heroCards.split(" ").filter(Boolean),...(spot.board??"").split(" ").filter(Boolean)];
+  return cards.length>=2&&new Set(cards.map(card=>card.toUpperCase())).size===cards.length;
+}
+
 export function analysisReadyBank(bank:PlayerDnaSpot[],mode?:GameMode){
-  return bank.filter(spot=>(!mode||spot.mode===mode)&&validateAiSpotForAnalysis(spot).status==="PASS");
+  const scoped=bank.filter(spot=>(!mode||spot.mode===mode));
+  const strict=scoped.filter(spot=>validateAiSpotForAnalysis(spot).status==="PASS");
+  // Never deadlock the training UI merely because the remote AI/solver-enrichment
+  // layer is unavailable. Legacy/local spots may train Player DNA, while the
+  // evaluator remains responsible for refusing unsupported GTO/EV claims.
+  return strict.length?strict:scoped.filter(trainingSafe);
 }
 
 export function buildAnalysisReadySpotSession(bank:PlayerDnaSpot[],mode:GameMode,count:number,seed=Date.now()):PlayerDnaSpot[]{
@@ -27,7 +40,10 @@ export function buildAnalysisReadySpotSession(bank:PlayerDnaSpot[],mode:GameMode
   const identity=`ANALYSIS-${seed}`;
   const registry=loadSeen();
   const blocked=new Set(Object.entries(registry).filter(([,owner])=>owner!==identity).map(([fingerprint])=>fingerprint));
-  const pool=candidates.map(spot=>({spot,fingerprint:exactSpotFingerprint(spot)})).filter(item=>!blocked.has(item.fingerprint));
+  let pool=candidates.map(spot=>({spot,fingerprint:exactSpotFingerprint(spot)})).filter(item=>!blocked.has(item.fingerprint));
+  // If every local spot was seen in an older session, prefer reuse over a broken
+  // empty screen. AI-generated unseen spots replace these as soon as available.
+  if(!pool.length)pool=candidates.map(spot=>({spot,fingerprint:exactSpotFingerprint(spot)}));
   const byFingerprint=new Map(pool.map(item=>[item.fingerprint,item]));
   const persisted=loadSelection(mode,seed).filter(fingerprint=>byFingerprint.has(fingerprint));
   const selected:PlayerDnaSpot[]=[];
