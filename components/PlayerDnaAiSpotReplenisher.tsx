@@ -6,7 +6,7 @@ import {refreshAiSpotBank} from "@/lib/ai-spot-pipeline";
 
 const OFFLINE_BANK=[...playerDnaSpots];
 const SEEN_REGISTRY_KEY="stackup.player-dna.seen-spots.v2";
-const REFRESH_MS=15*60*1000;
+const REFRESH_MS=3*60*1000;
 
 function seenFingerprints(){
   try{
@@ -17,12 +17,18 @@ function seenFingerprints(){
 
 export default function PlayerDnaAiSpotReplenisher(){
   useEffect(()=>{
-    let cancelled=false;
-    const refresh=async()=>{if(cancelled)return;await refreshAiSpotBank(playerDnaSpots,OFFLINE_BANK,seenFingerprints())};
+    let cancelled=false,busy=false;
+    const refresh=async()=>{if(cancelled||busy)return;busy=true;try{await refreshAiSpotBank(playerDnaSpots,OFFLINE_BANK,seenFingerprints())}finally{busy=false}};
     void refresh();
     const timer=window.setInterval(()=>void refresh(),REFRESH_MS);
-    const online=()=>void refresh();window.addEventListener("online",online);
-    return()=>{cancelled=true;window.clearInterval(timer);window.removeEventListener("online",online)};
+    const online=()=>void refresh();
+    const visible=()=>{if(document.visibilityState==="visible")void refresh()};
+    const consumed=()=>void refresh();
+    window.addEventListener("online",online);
+    window.addEventListener("focus",online);
+    window.addEventListener("stackup:player-dna-spot-consumed",consumed as EventListener);
+    document.addEventListener("visibilitychange",visible);
+    return()=>{cancelled=true;window.clearInterval(timer);window.removeEventListener("online",online);window.removeEventListener("focus",online);window.removeEventListener("stackup:player-dna-spot-consumed",consumed as EventListener);document.removeEventListener("visibilitychange",visible)};
   },[]);
   return null;
 }
