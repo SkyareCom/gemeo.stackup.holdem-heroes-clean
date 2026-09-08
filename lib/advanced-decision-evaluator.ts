@@ -4,6 +4,7 @@ import {analyzeTechnicalDecision} from "@/lib/player-dna-technical-analysis";
 import {inspectGtoNode} from "@/lib/gto-node-integrity";
 import {evaluateCallFoldEv} from "@/lib/gto-call-ev";
 import {exactMultiwayShowdownEquity} from "@/lib/gto-multiway-equity-engine";
+import {buildExactPotAccounting} from "@/lib/gto-pot-accounting";
 
 export type AdvancedVerdictCode="CORRECT_ACTION"|"ADJUSTABLE_ACTION"|"INCORRECT_ACTION"|"UNVALIDATED_ACTION";
 export type AdvancedEvStatus="EV_MAX"|"EV_NEUTRAL"|"EV_NEGATIVE"|"UNVALIDATED";
@@ -17,7 +18,7 @@ function pct(v:number|null){return v===null?"N/A":`${(v*100).toFixed(1)}%`}
 function activeVillainCount(state:SolverSpotState){const hero=state.hero.position.toUpperCase();return state.players.filter(p=>p.position.toUpperCase()!==hero&&p.action.toUpperCase()!=="FOLD").length}
 
 export function evaluateAdvancedDecision(state:SolverSpotState,selectedAction:PlayerAction,legalActions:PlayerAction[],selectedSizing?:string):AdvancedDecisionEvaluatorOutput{
-  const integrity=inspectGtoNode(state,legalActions),legal=integrity.legalActions,selectedIsLegal=legal.includes(selectedAction),technical=analyzeTechnicalDecision(state,selectedAction,legal,selectedSizing),callFold=evaluateCallFoldEv(state);
+  const integrity=inspectGtoNode(state,legalActions),legal=integrity.legalActions,selectedIsLegal=legal.includes(selectedAction),technical=analyzeTechnicalDecision(state,selectedAction,legal,selectedSizing),callFold=evaluateCallFoldEv(state),potAccounting=buildExactPotAccounting(state);
   const multiway=activeVillainCount(state)>1?exactMultiwayShowdownEquity(state):null;
   const diagnosticVerdict:AdvancedVerdictCode=technical.verdict.startsWith("AÇÃO CORRETA")?"CORRECT_ACTION":technical.verdict.startsWith("AÇÃO INCORRETA")?"INCORRECT_ACTION":"ADJUSTABLE_ACTION";
   let verdictCode:AdvancedVerdictCode=!selectedIsLegal?"INCORRECT_ACTION":"UNVALIDATED_ACTION";
@@ -32,19 +33,24 @@ export function evaluateAdvancedDecision(state:SolverSpotState,selectedAction:Pl
   }
   const decisionPoint=selectedSizing?`HERO ESCOLHE ${selectedAction} ${selectedSizing}`:`HERO ESCOLHE ${selectedAction}`;
   const treeAudit=`TO CALL ${integrity.toCall.toFixed(1)} BB · POT ${integrity.potBeforeCall.toFixed(1)} BB · POT ODDS ${pct(integrity.potOdds)} · STACK EFETIVO ${integrity.effectiveStack.toFixed(1)} BB · SPR ${integrity.spr===null?"N/A":integrity.spr.toFixed(2)} · ${integrity.facingBet?"ENFRENTA APOSTA/RAISE":"SEM APOSTA A ENFRENTAR"} · AÇÕES LEGAIS ${legal.join(", ")}`;
-  const readiness=`RANGES ${integrity.rangeReady?"OK":"AUSENTES"} · BLOCKERS ${integrity.blockersReady?"OK":"INVÁLIDOS"} · EQUITY ${integrity.equityReady?"ELEGÍVEL":"BLOQUEADA"} · ICM ${integrity.icmReady?"OK":"INCOMPLETO"} · PRÉ-REQUISITOS ${integrity.solverReady?"OK":"INCOMPLETOS"}`;
+  const readiness=`RANGES ${integrity.rangeReady?"OK":"AUSENTES"} · BLOCKERS ${integrity.blockersReady?"OK":"INVÁLIDOS"} · EQUITY ${integrity.equityReady?"ELEGÍVEL":"BLOQUEADA"} · POTS ${integrity.potAccountingReady?"EXATOS":"NÃO VALIDADOS"} · ICM ${integrity.icmReady?"OK":"INCOMPLETO"} · PRÉ-REQUISITOS ${integrity.solverReady?"OK":"INCOMPLETOS"}`;
   const issues=integrity.issues.length?integrity.issues.join(" | "):"SEM INCONSISTÊNCIAS ESTRUTURAIS DETECTADAS";
+  let potAudit="POT ACCOUNTING INDISPONÍVEL: COMMITMENTS TOTAIS NÃO FORNECIDOS";
+  if(potAccounting.status==="OK"){
+    const layers=potAccounting.pots.map((pot,index)=>`${index===0?"MAIN":`SIDE ${index}`} ${pot.amountBb.toFixed(2)} BB [${pot.eligible.join(", ")}]`).join(" · ");
+    potAudit=`POT ACCOUNTING EXATO: ${layers||"SEM CAMADAS CONTESTADAS"} · TOTAL ${potAccounting.totalPotBb.toFixed(2)} BB${potAccounting.refunds.length?` · REFUNDS ${potAccounting.refunds.map(r=>`${r.position} ${r.amountBb.toFixed(2)} BB`).join(", ")}`:""}${potAccounting.reconciliationDeltaBb!==null?` · DELTA ${potAccounting.reconciliationDeltaBb.toFixed(2)} BB`:""}`;
+  }else if(potAccounting.issues.length)potAudit=`POT ACCOUNTING ${potAccounting.status}: ${potAccounting.issues.join(" / ")}`;
   let equityAudit="";
   if(multiway){
     if(multiway.status==="OK"){
       const hero=multiway.players.find(p=>p.position.toUpperCase()===state.hero.position.toUpperCase());
       const villainSummary=multiway.players.filter(p=>p.position.toUpperCase()!==state.hero.position.toUpperCase()).map(p=>`${p.position.toUpperCase()} ${pct(p.equity)}`).join(" · ");
-      equityAudit=`EQUITY MULTIWAY EXATA · HERO ${pct(hero?.equity??null)} · ${villainSummary} · ${multiway.comboTuples} TUPLAS DE COMBOS · ${multiway.runouts} RUNOUTS. EV DE CALL/RAISE NÃO É INFERIDO SEM MODELAGEM EXATA DE SIDE POTS/RESPOSTAS.`;
+      equityAudit=`EQUITY MULTIWAY EXATA · HERO ${pct(hero?.equity??null)} · ${villainSummary} · ${multiway.comboTuples} TUPLAS DE COMBOS · ${multiway.runouts} RUNOUTS. ${integrity.potAccountingReady?"SIDE POTS ESTÃO CONTABILIZADOS E VALIDADOS, MAS EV POR AÇÃO AINDA EXIGE MODELAGEM DE RESPOSTAS/ÁRVORE.":"EV MULTIWAY CONTINUA BLOQUEADO ATÉ COMMITMENTS/SIDE POTS EXATOS."}`;
     }else equityAudit=`EQUITY MULTIWAY BLOQUEADA: ${multiway.issues.join(" / ")}`;
   }else if(callFold.status==="EXACT_TERMINAL")equityAudit=`EV CALL/FOLD TERMINAL DISPONÍVEL · EQUITY ${pct(callFold.equity)} · REQUIRED ${pct(callFold.requiredEquity)} · CALL EV ${(callFold.callEvBb??0).toFixed(3)} BB`;
   else if(callFold.status==="EQUITY_ONLY")equityAudit=`EQUITY DE SHOWDOWN ${pct(callFold.equity)} DISPONÍVEL, MAS EV DE CALL NÃO É FECHADO POR EXISTIREM DECISÕES FUTURAS`;
   else equityAudit=`EV CALL/FOLD INDISPONÍVEL: ${callFold.issues.join(" / ")}`;
   const justification=!selectedIsLegal?`AÇÃO ${selectedAction} É ILEGAL NESTE NÓ. ${treeAudit}.`:deterministicJustification||`SEM SOLUÇÃO CONVERGIDA/VALIDADA, O APP NÃO ATRIBUI +EV/-EV GTO NEM FREQUÊNCIA GTO. O DIAGNÓSTICO INTERNO APONTA ${technical.bestAction} (${diagnosticVerdict}), APENAS COMO HIPÓTESE DE ESTUDO.`;
   const distribution:AdvancedRangeAction[]=legal.map(action=>({action_name:actionLabel(action,action===selectedAction?selectedSizing:undefined),frequency_percent:null,ev_status:"UNVALIDATED",note:callFold.status==="EXACT_TERMINAL"&&(action==="CALL"||action==="FOLD")?`EV TERMINAL DISPONÍVEL PARA CALL/FOLD; FREQUÊNCIA GTO CONTINUA NÃO VALIDADA.`:"FREQUÊNCIA E EV ESTRATÉGICO BLOQUEADOS ATÉ EXISTIR SOLUÇÃO GTO VALIDADA PARA ESTE NÓ."}));
-  return{street_analysis:[{street:streetLabel[state.street],decision_point:decisionPoint,technical_evaluation:`INTEGRIDADE DO NÓ: ${treeAudit} | PRONTIDÃO: ${readiness} | EQUITY/EV: ${equityAudit} | PENDÊNCIAS: ${issues}`,action_classification:{verdict_code:verdictCode,verdict_label:verdictLabel,justification},range_action_distribution:{total_percentage:null,actions:distribution}}]};
+  return{street_analysis:[{street:streetLabel[state.street],decision_point:decisionPoint,technical_evaluation:`INTEGRIDADE DO NÓ: ${treeAudit} | PRONTIDÃO: ${readiness} | POTS: ${potAudit} | EQUITY/EV: ${equityAudit} | PENDÊNCIAS: ${issues}`,action_classification:{verdict_code:verdictCode,verdict_label:verdictLabel,justification},range_action_distribution:{total_percentage:null,actions:distribution}}]};
 }
