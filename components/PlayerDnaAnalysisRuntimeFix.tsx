@@ -2,7 +2,7 @@
 
 import {useEffect} from "react";
 import {evaluateSolverDecision,type SolverSpotState} from "@/lib/player-dna-solver-v2";
-import {analyzeTechnicalDecision} from "@/lib/player-dna-technical-analysis";
+import {evaluateAdvancedDecision} from "@/lib/advanced-decision-evaluator";
 import type {PlayerAction,PlayerDnaSpot} from "@/data/player-dna-spots";
 
 const ACTIONS:PlayerAction[]=["FOLD","CHECK","CALL","BET","RAISE","ALL-IN"];
@@ -33,9 +33,16 @@ function renderAnalysis(card:HTMLElement,selectedText:string,state:SolverSpotSta
     body=solver.actionMix.map(row=>`<div class="v2-section"><div class="v2-label">LINHA VALIDADA</div><div class="v2-text">${escapeHtml(`${row.action} ${row.frequency}% · ${row.classification} · EV ${row.evBb} BB`)}</div></div>`).join("");
     card.dataset.analysisSource="VALIDATED_SOLVER_REFERENCE";
   }else{
-    const legal=spot.legalActions??spot.actions,technical=analyzeTechnicalDecision(state,selectedAction,legal.length?legal:[selectedAction],sizing);verdict=technical.verdict;
-    body=`<div class="v2-section v2-primary"><div class="v2-label">MELHOR LINHA</div><div class="v2-text">${escapeHtml(`${technical.bestAction} · CONFIANÇA ${technical.confidence} · ${technical.summary}`)}</div></div>${technical.sections.map(section=>`<div class="v2-section" data-section="${escapeHtml(section.key)}"><div class="v2-label">${escapeHtml(section.label)}</div><div class="v2-text">${escapeHtml(section.text)}</div></div>`).join("")}<div class="v2-section v2-comments"><div class="v2-label">COMENTÁRIOS TÉCNICOS</div>${technical.comments.map(comment=>`<div class="v2-comment">${escapeHtml(comment)}</div>`).join("")}</div>`;
-    card.dataset.analysisSource="STACKUP_GTO_DIAGNOSTIC";
+    const legal=spot.legalActions??spot.actions;
+    const advanced=evaluateAdvancedDecision(state,selectedAction,legal.length?legal:[selectedAction],sizing).street_analysis[0];
+    verdict=advanced.action_classification.verdict_label.toUpperCase();
+    body=`
+      <div class="v2-section v2-primary"><div class="v2-label">PONTO DE DECISÃO</div><div class="v2-text">${escapeHtml(advanced.decision_point)}</div></div>
+      <div class="v2-section"><div class="v2-label">AUDITORIA TÉCNICA MULTICRITÉRIO</div><div class="v2-text">${escapeHtml(advanced.technical_evaluation)}</div></div>
+      <div class="v2-section"><div class="v2-label">JUSTIFICATIVA DA CLASSIFICAÇÃO</div><div class="v2-text">${escapeHtml(advanced.action_classification.justification)}</div></div>
+      <div class="v2-section"><div class="v2-label">MATRIZ DE FREQUÊNCIAS DE RANGE · TOTAL 100%</div>${advanced.range_action_distribution.actions.map(row=>`<div class="v2-range-row"><span>${escapeHtml(row.action_name.toUpperCase())}</span><strong>${row.frequency_percent.toFixed(2)}%</strong><em>${escapeHtml(row.ev_status)}</em></div>`).join("")}</div>
+      <div class="v2-section v2-comments"><div class="v2-label">LIMITES DO MODELO</div><div class="v2-comment">FREQUÊNCIAS EXIBIDAS SÃO DISTRIBUIÇÕES DIAGNÓSTICAS MODELADAS PARA COMPARAÇÃO DE LINHAS. NÃO SÃO FREQUÊNCIAS EXATAS EXTRAÍDAS DE SOLVER NEM EV NUMÉRICO FABRICADO.</div></div>`;
+    card.dataset.analysisSource="STACKUP_ADVANCED_DECISION_EVALUATOR";
   }
   card.className="final-analysis-card-v2";
   card.innerHTML=`<div class="v2-line v2-head">AÇÃO REGISTRADA NO HISTÓRICO DO PLAYER DNA</div><div class="v2-line v2-value">${escapeHtml(selectedText)}</div><div class="v2-line v2-head">RESULTADO</div><div class="v2-line v2-verdict">${escapeHtml(verdict)}</div><div class="v2-study">${body}</div>`;
@@ -55,10 +62,12 @@ export default function PlayerDnaAnalysisRuntimeFix(){
       .final-analysis-card-v2 .v2-text,.final-analysis-card-v2 .v2-comment{font-size:8px!important;line-height:1.25!important;color:#ede6db!important;-webkit-text-fill-color:#ede6db!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important}
       .final-analysis-card-v2 .v2-primary .v2-text{font-size:8.5px!important;font-weight:700!important}
       .final-analysis-card-v2 .v2-comment{padding:2px 0!important}
+      .final-analysis-card-v2 .v2-range-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;gap:6px!important;align-items:center!important;padding:2px 0!important;font-size:7.6px!important;color:#ede6db!important;-webkit-text-fill-color:#ede6db!important}
+      .final-analysis-card-v2 .v2-range-row strong{font-size:7.8px!important;color:#B8D7C2!important;-webkit-text-fill-color:#B8D7C2!important}.final-analysis-card-v2 .v2-range-row em{font-size:7px!important;font-style:normal!important;color:#00b52e!important;-webkit-text-fill-color:#00b52e!important}
       .final-analysis-card-v2.awaiting{min-height:60px!important;height:60px!important;display:grid!important;place-items:center!important;animation:stackupAnalysisBlink 1.05s ease-in-out infinite!important}
       .final-analysis-card-v2.awaiting .v2-wait{font-size:11px!important}
       @keyframes stackupAnalysisBlink{0%,100%{opacity:1}50%{opacity:.38}}
-      @media(max-width:620px){.final-analysis-card-v2{padding:7px!important}.final-analysis-card-v2 .v2-label{font-size:7px!important}.final-analysis-card-v2 .v2-text,.final-analysis-card-v2 .v2-comment{font-size:7.4px!important}.final-analysis-card-v2 .v2-verdict{font-size:10px!important}}
+      @media(max-width:620px){.final-analysis-card-v2{padding:7px!important}.final-analysis-card-v2 .v2-label{font-size:7px!important}.final-analysis-card-v2 .v2-text,.final-analysis-card-v2 .v2-comment{font-size:7.4px!important}.final-analysis-card-v2 .v2-verdict{font-size:10px!important}.final-analysis-card-v2 .v2-range-row{font-size:7px!important}}
     `;
     document.head.querySelector("style[data-player-dna-analysis-runtime-fix]")?.remove();document.head.appendChild(style);
     let signature="",busy=false;
