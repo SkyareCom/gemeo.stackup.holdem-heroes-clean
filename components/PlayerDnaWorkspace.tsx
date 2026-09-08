@@ -3,7 +3,7 @@
 import {useEffect,useMemo,useState} from "react";
 import PlayerDnaPokerTable from "@/components/PlayerDnaPokerTable";
 import {evaluatePlayerDna,type DecisionSizing,type PlayerDnaAnswer} from "@/lib/player-dna";
-import {buildBalancedSpotSession} from "@/lib/player-dna-sampler";
+import {buildAnalysisReadySpotSession} from "@/lib/player-dna-analysis-ready-sampler";
 import {playerDnaSpots,type GameMode,type PlayerAction,type PlayerDnaSpot} from "@/data/player-dna-spots";
 import styles from "./PlayerDnaWorkspace.module.css";
 
@@ -21,12 +21,12 @@ type DnaLibrary={active:SavedDnaSession|null;reports:DnaReport[]};
 
 const emptyLibrary:DnaLibrary={active:null,reports:[]};
 
-function buildSession(mode:AnalysisMode,count:number,seed:number,answers:PlayerDnaAnswer[]){
-  if(mode!=="ALEATORIO")return buildBalancedSpotSession(playerDnaSpots,mode,count,seed,answers);
+function buildSession(mode:AnalysisMode,count:number,seed:number){
+  if(mode!=="ALEATORIO")return buildAnalysisReadySpotSession(playerDnaSpots,mode,count,seed);
   const cashCount=Math.ceil(count/2);
   const tournamentCount=Math.floor(count/2);
-  const cash=buildBalancedSpotSession(playerDnaSpots,"CASH",cashCount,seed,answers.filter((_,i)=>i%2===0));
-  const tournament=buildBalancedSpotSession(playerDnaSpots,"TORNEIO",tournamentCount,seed^0x9e3779b9,answers.filter((_,i)=>i%2===1));
+  const cash=buildAnalysisReadySpotSession(playerDnaSpots,"CASH",cashCount,seed);
+  const tournament=buildAnalysisReadySpotSession(playerDnaSpots,"TORNEIO",tournamentCount,seed^0x9e3779b9);
   const startCash=(seed&1)===0;
   const mixed:PlayerDnaSpot[]=[];
   for(let i=0;i<count;i++){
@@ -55,9 +55,10 @@ export default function PlayerDnaWorkspace(){
   const[selectedReportId,setSelectedReportId]=useState<string|null>(null);
   const[editingId,setEditingId]=useState<string|null>(null);
   const[editingName,setEditingName]=useState("");
+  const[bankRevision,setBankRevision]=useState(0);
 
   const generatedCount=target?Math.min(target,answers.length+1):0;
-  const session=useMemo(()=>target?buildSession(mode,generatedCount,sessionSeed,answers):[],[mode,target,generatedCount,sessionSeed,answers]);
+  const session=useMemo(()=>target?buildSession(mode,generatedCount,sessionSeed):[],[mode,target,generatedCount,sessionSeed,bankRevision]);
   const spot=session[index];
   const result=useMemo(()=>finished?evaluatePlayerDna(session,answers):null,[finished,session,answers]);
   const selectedReport=library.reports.find(report=>report.id===selectedReportId)??null;
@@ -71,6 +72,12 @@ export default function PlayerDnaWorkspace(){
       else{const legacy=localStorage.getItem(LEGACY_STORAGE_KEY);if(legacy){const parsed=JSON.parse(legacy) as SavedDnaSession;if(parsed&&parsed.target>0&&Array.isArray(parsed.answers))next={active:parsed.finished?null:parsed,reports:[]}}}
     }catch{}
     setLibrary(next);setHydrated(true);
+  },[]);
+
+  useEffect(()=>{
+    const onBankUpdated=()=>setBankRevision(value=>value+1);
+    window.addEventListener("stackup:player-dna-bank-updated",onBankUpdated);
+    return()=>window.removeEventListener("stackup:player-dna-bank-updated",onBankUpdated);
   },[]);
 
   useEffect(()=>{
@@ -120,6 +127,7 @@ export default function PlayerDnaWorkspace(){
     const answer:PlayerDnaAnswer={spotId:spot.id,action:selectedAction,...(selectedSizing?{sizing:selectedSizing}:{})};
     const next=[...answers,answer];
     setAnswers(next);setSelectedAction(null);setSelectedSizing(null);setActionSequenceReady(false);
+    window.dispatchEvent(new Event("stackup:player-dna-spot-consumed"));
     if(next.length>=target){setFinished(true);return}
     setIndex(v=>Math.min(v+1,target-1));
   }
@@ -147,7 +155,7 @@ export default function PlayerDnaWorkspace(){
   </div>;
 
   if(finished&&result)return <div className={styles.result}><div><span className="tag">RELATÓRIO FINAL · PLAYER DNA · {mode}</span><h3>{result.label}</h3><p>{answers.length} / {target} SPOTS CONCLUÍDOS · RELATÓRIO SALVO NO HISTÓRICO</p></div><div className={styles.resultGrid}><Metric label="AGRESSÃO" value={`${result.scores.aggression}%`}/><Metric label="DISCIPLINA" value={`${result.scores.discipline}%`}/><Metric label="PRESSÃO" value={`${result.scores.pressure}%`}/><Metric label="PASSIVIDADE" value={`${result.scores.passivity}%`}/></div><button type="button" className="primary" onClick={leave}>VOLTAR AO PLAYER DNA</button></div>;
-  if(!spot)return <div className={styles.result}><h3>DADOS INSUFICIENTES</h3><button type="button" className="primary" onClick={leave}>VOLTAR</button></div>;
+  if(!spot)return <div className={styles.result}><div><span className="tag">PLAYER DNA · GATE DE INTEGRIDADE</span><h3>GERANDO SPOT VALIDADO</h3><p>O TREINO SÓ LIBERA UM SPOT DEPOIS QUE RANGES, CARTAS, AÇÕES, COMMITMENTS, POT E CONTEXTO PASSAM PELA VALIDAÇÃO.</p></div><button type="button" className="primary" onClick={leave}>VOLTAR</button></div>;
 
   const sizingOptions=selectedAction==="BET"?betSizings:selectedAction==="RAISE"?raiseSizings:[];
   const canContinue=Boolean(actionSequenceReady&&selectedAction&&(!(selectedAction==="BET"||selectedAction==="RAISE")||selectedSizing));
