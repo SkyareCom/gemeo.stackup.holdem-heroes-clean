@@ -43,7 +43,7 @@ function validateCore(reference:SolverReferenceValidationInput){
   if(!benchmark){issues.push("EVIDÊNCIA DE BENCHMARK CONTRA SOLVER DE REFERÊNCIA AUSENTE.");return{issues,benchmark:null}}
   if(!benchmark.benchmarkSource?.trim())issues.push("SOLVER/FONTE DO BENCHMARK NÃO IDENTIFICADO.");
   if(benchmark.stateFingerprint!==reference.fingerprint)issues.push("FINGERPRINT DO BENCHMARK NÃO CORRESPONDE AO NÓ DA REFERÊNCIA.");
-  if(!benchmark.comparedActions?.length)issues.push("BENCHMARK NÃO COMPÕE AÇÕES COMPARADAS.");
+  if(!benchmark.comparedActions?.length)issues.push("BENCHMARK NÃO CONTÉM AÇÕES COMPARADAS.");
   if(!validDate(benchmark.validatedAt))issues.push("DATA DO BENCHMARK AUSENTE OU INVÁLIDA.");
   if(!benchmark.rightsDetail?.trim())issues.push("DETALHE/AUDITORIA DOS DIREITOS DE USO DA FONTE AUSENTE.");
   if(!Number.isFinite(benchmark.maxFrequencyDeltaPct)||benchmark.maxFrequencyDeltaPct<0||benchmark.maxFrequencyDeltaPct>COMMERCIAL_GTO_THRESHOLDS.maxFrequencyDeltaPct)issues.push(`DELTA MÁXIMO DE FREQUÊNCIA EXCEDE ${COMMERCIAL_GTO_THRESHOLDS.maxFrequencyDeltaPct.toFixed(2)} P.P.`);
