@@ -1,11 +1,12 @@
 import type {PlayerDnaSpot} from "@/data/player-dna-spots";
 import {parseNormalizedSolveImport,type NormalizedSolveImport} from "@/lib/gto-solve-import";
-import {addSolverReferences} from "@/lib/player-dna-solver-v2";
+import {addSolverReferences,solverFingerprint} from "@/lib/player-dna-solver-v2";
+import {playerDnaSpotToSolverState} from "@/lib/player-dna-state-adapter";
 import {isCertifiedTrainingSpot} from "@/lib/player-dna-validated-spot";
 import {exactSpotFingerprint} from "@/lib/spot-identity";
 import {canUseStackupAi,stackupAiAuthHeaders} from "@/lib/stackup-ai-subscription";
 
-const CACHE_KEY="stackup.player-dna.certified-supply.v1";
+const CACHE_KEY="stackup.player-dna.certified-supply.v2";
 const TARGET=192;
 const MAX_ROUNDS=8;
 const REQUIRED_COVERAGE=["PREFLOP","FLOP","TURN","RIVER","HEADS-UP","MULTIWAY","6-MAX","8-MAX","9-MAX","10-MAX","SRP","3-BET","4-BET","SQUEEZE","BLIND WAR","ALL-IN","SIDE POT","OVERBET","IP","OOP","SHORT","MEDIUM","DEEP","EARLY","MID","BOLHA","ITM","FT","ICM"];
@@ -15,13 +16,16 @@ type CachedCertifiedSupply={spots:PlayerDnaSpot[];solves:NormalizedSolveImport[]
 
 function browser(){return typeof window!=="undefined"&&typeof window.localStorage!=="undefined"}
 function gateway(){return process.env.NEXT_PUBLIC_STACKUP_AI_GATEWAY_URL?.trim().replace(/\/$/,"")??""}
+function requiredSolverFingerprint(spot:PlayerDnaSpot){const state=playerDnaSpotToSolverState(spot);return state?solverFingerprint(state):null}
+function requiredSolverFingerprints(spots:PlayerDnaSpot[]){return new Set(spots.map(requiredSolverFingerprint).filter((value):value is string=>Boolean(value)))}
 
-function activateSolves(solves:NormalizedSolveImport[]){
+function activateSolves(solves:NormalizedSolveImport[],allowedFingerprints:Set<string>){
   const references=[];
   for(const solve of solves){
+    if(!allowedFingerprints.has(solve.fingerprint))continue;
     if(solve.source.usageRights!=="COMMERCIAL_AUTHORIZED")continue;
     const parsed=parseNormalizedSolveImport(solve);
-    if(parsed.status==="ACCEPTED"&&parsed.reference)references.push(parsed.reference);
+    if(parsed.status==="ACCEPTED"&&parsed.reference&&parsed.reference.fingerprint===solve.fingerprint)references.push(parsed.reference);
   }
   if(references.length)addSolverReferences(references);
   return references.length;
@@ -38,14 +42,20 @@ export function loadCachedCertifiedSupply(){
   try{
     const raw=window.localStorage.getItem(CACHE_KEY);const parsed=raw?JSON.parse(raw) as CachedCertifiedSupply:null;
     if(!parsed||!Array.isArray(parsed.spots)||!Array.isArray(parsed.solves))return{spots:[],solves:[]};
-    activateSolves(parsed.solves);
-    return{spots:certifiedOnly(parsed.spots),solves:parsed.solves};
+    const allowed=requiredSolverFingerprints(parsed.spots);
+    const boundSolves=parsed.solves.filter(solve=>allowed.has(solve.fingerprint));
+    activateSolves(boundSolves,allowed);
+    const spots=certifiedOnly(parsed.spots);
+    const certifiedFingerprints=requiredSolverFingerprints(spots);
+    return{spots,solves:boundSolves.filter(solve=>certifiedFingerprints.has(solve.fingerprint))};
   }catch{return{spots:[],solves:[]}}
 }
 
 function saveCertifiedSupply(spots:PlayerDnaSpot[],solves:NormalizedSolveImport[]){
   if(!browser())return;
-  try{window.localStorage.setItem(CACHE_KEY,JSON.stringify({spots,solves,savedAt:Date.now()} satisfies CachedCertifiedSupply))}catch{}
+  const allowed=requiredSolverFingerprints(spots);
+  const boundSolves=solves.filter(solve=>allowed.has(solve.fingerprint));
+  try{window.localStorage.setItem(CACHE_KEY,JSON.stringify({spots,solves:boundSolves,savedAt:Date.now()} satisfies CachedCertifiedSupply))}catch{}
 }
 
 async function requestCertifiedPackage(count:number,forbiddenFingerprints:string[]):Promise<CertifiedPackage|null>{
@@ -63,15 +73,19 @@ async function requestCertifiedPackage(count:number,forbiddenFingerprints:string
       validationPolicy:{
         requireExactNodeFingerprint:true,
         requireSolverSolution:true,
+        requireOneExactSolvePerNode:true,
         requireCommercialAuthorizedRights:true,
         requireBenchmark:true,
         rejectAiEstimatedEv:true,
         rejectAiEstimatedFrequency:true,
-        rejectUnsolvedCandidate:true
+        rejectUnsolvedCandidate:true,
+        rejectUnmatchedSolve:true
       },
       workflow:[
         "AI GENERATES CANDIDATE STATE ONLY",
-        "SOLVER SERVICE SOLVES OR MATCHES THE EXACT CANONICAL NODE",
+        "SERVER CANONICALIZES THE CANDIDATE AND COMPUTES THE STACKUP SOLVER FINGERPRINT",
+        "SOLVER SERVICE SOLVES OR MATCHES THAT EXACT CANONICAL NODE",
+        "NORMALIZED SOLVE FINGERPRINT MUST EQUAL THE CANDIDATE SOLVER FINGERPRINT",
         "BENCHMARK/PROVENANCE LAYER VALIDATES THE SOLUTION",
         "RETURN THE SPOT ONLY TOGETHER WITH ITS NORMALIZED STACKUP_GTO_SOLVE_V1 EVIDENCE",
         "NEVER LET THE LANGUAGE MODEL INVENT EV, FREQUENCY, BEST ACTION OR SOLVER OUTPUT"
@@ -89,26 +103,36 @@ export async function refreshCertifiedSpotBank(runtimeBank:PlayerDnaSpot[],forbi
   const spotMap=new Map(cached.spots.map(spot=>[exactSpotFingerprint(spot),spot]));
   const solveMap=new Map(cached.solves.map(solve=>[solve.fingerprint,solve]));
   const forbidden=new Set([...forbiddenFingerprints,...spotMap.keys()]);
-  let rounds=0,accepted=spotMap.size,rejected=0,model:string|undefined;
+  let rounds=0,accepted=spotMap.size,rejected=0,unmatchedSolves=0,model:string|undefined;
   while(spotMap.size<TARGET&&rounds<MAX_ROUNDS){
     rounds++;
     const pkg=await requestCertifiedPackage(Math.min(64,TARGET-spotMap.size),[...forbidden]);
     if(!pkg)break;
     model=pkg.model??model;
-    for(const solve of pkg.solves){if(solve?.fingerprint)solveMap.set(solve.fingerprint,solve)}
-    activateSolves([...solveMap.values()]);
+    const candidateSolverFingerprints=requiredSolverFingerprints(pkg.spots);
+    const packageSolves=new Map<string,NormalizedSolveImport>();
+    for(const solve of pkg.solves){
+      const parsed=parseNormalizedSolveImport(solve);
+      if(parsed.status!=="ACCEPTED"||solve.source.usageRights!=="COMMERCIAL_AUTHORIZED"||!candidateSolverFingerprints.has(solve.fingerprint)){unmatchedSolves++;continue}
+      packageSolves.set(solve.fingerprint,solve);
+    }
+    for(const [fingerprint,solve] of packageSolves)solveMap.set(fingerprint,solve);
+    activateSolves([...packageSolves.values()],candidateSolverFingerprints);
     let added=0;
     for(const spot of pkg.spots){
       const fingerprint=exactSpotFingerprint(spot);
-      if(forbidden.has(fingerprint)){rejected++;continue}
+      const solverFp=requiredSolverFingerprint(spot);
+      if(forbidden.has(fingerprint)||!solverFp||!packageSolves.has(solverFp)){rejected++;continue}
       if(!isCertifiedTrainingSpot(spot)){rejected++;continue}
       forbidden.add(fingerprint);spotMap.set(fingerprint,spot);added++;
     }
     accepted=spotMap.size;
-    if(!added&&pkg.spots.length===0)break;
+    if(!added)break;
   }
   const spots=[...spotMap.values()].slice(0,TARGET);
-  if(spots.length){runtimeBank.splice(0,runtimeBank.length,...spots);saveCertifiedSupply(spots,[...solveMap.values()])}
+  const allowed=requiredSolverFingerprints(spots);
+  const solves=[...solveMap.values()].filter(solve=>allowed.has(solve.fingerprint));
+  if(spots.length){runtimeBank.splice(0,runtimeBank.length,...spots);saveCertifiedSupply(spots,solves)}
   else runtimeBank.splice(0,runtimeBank.length);
-  return{source:spots.length?"CERTIFIED":"EMPTY" as const,count:spots.length,accepted,rejected,rounds,model:model??null};
+  return{source:spots.length?"CERTIFIED":"EMPTY" as const,count:spots.length,accepted,rejected,unmatchedSolves,rounds,model:model??null};
 }
