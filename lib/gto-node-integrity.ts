@@ -11,6 +11,7 @@ export type GtoNodeIntegrity={
   effectiveStack:number;
   spr:number|null;
   rangeReady:boolean;
+  equityReady:boolean;
   icmReady:boolean;
   solverReady:boolean;
   blockersReady:boolean;
@@ -68,8 +69,15 @@ export function inspectGtoNode(state:SolverSpotState,declared:PlayerAction[]):Gt
   const rangeReady=heroRangeReady&&villainsReady;
   if(!rangeReady)issues.push("RANGES PONDERADOS DO NÓ INCOMPLETOS; EQUITY DE RANGE, EQR E FREQUÊNCIAS GTO NÃO PODEM SER INFERIDOS.");
 
+  const postflopBoardReady=state.board.length>=3&&state.board.length<=5;
+  if(state.board.length>5)issues.push("BOARD POSSUI MAIS DE 5 CARTAS.");
+  if(state.street!=="PREFLOP"&&!postflopBoardReady)issues.push("BOARD INCOMPLETO PARA CÁLCULO EXAUSTIVO DE EQUITY PÓS-FLOP.");
+  const headsUp=active.length===1;
+  if(active.length>1)issues.push("EQUITY MULTIWAY EXAUSTIVA AINDA NÃO HABILITADA; NÃO CONVERTER EQUITY HU EM RESULTADO MULTIWAY.");
+  const equityReady=blockersReady&&headsUp&&postflopBoardReady&&Boolean(villainEntries[0]?.[1]?.length);
+
   const icmReady=state.mode!=="TORNEIO"||Boolean(state.payouts?.length&&state.fieldStacks?.length);
   if(state.mode==="TORNEIO"&&!icmReady)issues.push("DADOS DE PAYOUT/FIELD INCOMPLETOS; ICM/RISK PREMIUM EXATO NÃO PODE SER CALCULADO.");
-  const solverReady=rangeReady&&blockersReady&&icmReady&&!issues.some(issue=>issue.includes("AÇÕES IMPOSSÍVEIS")||issue.includes("CARTAS AUSENTES")||issue.includes("INCOMPATÍVEIS"));
-  return{legalActions,facingBet,toCall,potBeforeCall,potOdds,effectiveStack,spr,rangeReady,icmReady,solverReady,blockersReady,heroRangeCombos:heroNormalized?.combos.length??0,villainRangeCombos,blockedVillainCombos,issues};
+  const solverReady=rangeReady&&equityReady&&icmReady&&!issues.some(issue=>issue.includes("AÇÕES IMPOSSÍVEIS")||issue.includes("CARTAS AUSENTES")||issue.includes("INCOMPATÍVEIS"));
+  return{legalActions,facingBet,toCall,potBeforeCall,potOdds,effectiveStack,spr,rangeReady,equityReady,icmReady,solverReady,blockersReady,heroRangeCombos:heroNormalized?.combos.length??0,villainRangeCombos,blockedVillainCombos,issues};
 }
