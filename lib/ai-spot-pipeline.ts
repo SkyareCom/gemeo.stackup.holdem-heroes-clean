@@ -1,6 +1,7 @@
 import type {PlayerDnaSpot} from "@/data/player-dna-spots";
 import {exactSpotFingerprint} from "@/lib/spot-identity";
 import {validateAiSpotForAnalysis} from "@/lib/ai-spot-analysis-gate";
+import {canUseStackupAi,stackupAiAuthHeaders} from "@/lib/stackup-ai-subscription";
 
 export type AiSpotBatch={spots:PlayerDnaSpot[];model?:string;generatedAt?:string};
 export type AiSpotGenerationRequest={
@@ -67,9 +68,11 @@ export function applyAiRuntimeBank(runtimeBank:PlayerDnaSpot[],offlineBank:Playe
 
 export async function requestAiSpotBatch(request:AiSpotGenerationRequest):Promise<AiSpotBatch|null>{
   if(typeof navigator!=="undefined"&&!navigator.onLine)return null;
-  const endpoint=process.env.NEXT_PUBLIC_STACKUP_SPOT_AI_ENDPOINT?.trim();
+  if(browser()&&!canUseStackupAi("spotGeneration"))return null;
+  const gateway=process.env.NEXT_PUBLIC_STACKUP_AI_GATEWAY_URL?.trim();
+  const endpoint=(gateway?`${gateway.replace(/\/$/,"")}/v1/spots/generate`:process.env.NEXT_PUBLIC_STACKUP_SPOT_AI_ENDPOINT?.trim())||"";
   if(!endpoint)return null;
-  const response=await fetch(endpoint,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
+  const response=await fetch(endpoint,{method:"POST",headers:{"content-type":"application/json",...stackupAiAuthHeaders()},body:JSON.stringify({
     ...request,
     contract:{
       task:"GENERATE_UNSEEN_ANALYSIS_READY_NO_LIMIT_HOLDEM_SPOTS",
@@ -88,6 +91,7 @@ export async function requestAiSpotBatch(request:AiSpotGenerationRequest):Promis
       ]
     }
   })});
+  if(response.status===401||response.status===402||response.status===403||response.status===429)throw new Error(`STACKUP_AI_ENTITLEMENT_${response.status}`);
   if(!response.ok)throw new Error(`STACKUP AI SPOT ENDPOINT ${response.status}`);
   const data=await response.json() as AiSpotBatch;
   if(!data||!Array.isArray(data.spots))return null;
