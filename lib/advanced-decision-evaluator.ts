@@ -3,6 +3,7 @@ import type {SolverSpotState} from "@/lib/player-dna-solver-v2";
 import {analyzeTechnicalDecision} from "@/lib/player-dna-technical-analysis";
 import {inspectGtoNode} from "@/lib/gto-node-integrity";
 import {evaluateCallFoldEv} from "@/lib/gto-call-ev";
+import {exactMultiwayShowdownEquity} from "@/lib/gto-multiway-equity-engine";
 
 export type AdvancedVerdictCode="CORRECT_ACTION"|"ADJUSTABLE_ACTION"|"INCORRECT_ACTION"|"UNVALIDATED_ACTION";
 export type AdvancedEvStatus="EV_MAX"|"EV_NEUTRAL"|"EV_NEGATIVE"|"UNVALIDATED";
@@ -13,9 +14,11 @@ export type AdvancedDecisionEvaluatorOutput={street_analysis:AdvancedStreetAnaly
 const streetLabel:Record<SolverSpotState["street"],AdvancedStreetAnalysis["street"]>={PREFLOP:"Pre-Flop",FLOP:"Flop",TURN:"Turn",RIVER:"River"};
 function actionLabel(action:PlayerAction,sizing?:string){return sizing&&["BET","RAISE"].includes(action)?`${action} ${sizing}`:action}
 function pct(v:number|null){return v===null?"N/A":`${(v*100).toFixed(1)}%`}
+function activeVillainCount(state:SolverSpotState){const hero=state.hero.position.toUpperCase();return state.players.filter(p=>p.position.toUpperCase()!==hero&&p.action.toUpperCase()!=="FOLD").length}
 
 export function evaluateAdvancedDecision(state:SolverSpotState,selectedAction:PlayerAction,legalActions:PlayerAction[],selectedSizing?:string):AdvancedDecisionEvaluatorOutput{
   const integrity=inspectGtoNode(state,legalActions),legal=integrity.legalActions,selectedIsLegal=legal.includes(selectedAction),technical=analyzeTechnicalDecision(state,selectedAction,legal,selectedSizing),callFold=evaluateCallFoldEv(state);
+  const multiway=activeVillainCount(state)>1?exactMultiwayShowdownEquity(state):null;
   const diagnosticVerdict:AdvancedVerdictCode=technical.verdict.startsWith("AÇÃO CORRETA")?"CORRECT_ACTION":technical.verdict.startsWith("AÇÃO INCORRETA")?"INCORRECT_ACTION":"ADJUSTABLE_ACTION";
   let verdictCode:AdvancedVerdictCode=!selectedIsLegal?"INCORRECT_ACTION":"UNVALIDATED_ACTION";
   let verdictLabel:AdvancedStreetAnalysis["action_classification"]["verdict_label"]=!selectedIsLegal?"Ação Incorreta (-EV)":"Análise GTO não validada";
@@ -29,9 +32,18 @@ export function evaluateAdvancedDecision(state:SolverSpotState,selectedAction:Pl
   }
   const decisionPoint=selectedSizing?`HERO ESCOLHE ${selectedAction} ${selectedSizing}`:`HERO ESCOLHE ${selectedAction}`;
   const treeAudit=`TO CALL ${integrity.toCall.toFixed(1)} BB · POT ${integrity.potBeforeCall.toFixed(1)} BB · POT ODDS ${pct(integrity.potOdds)} · STACK EFETIVO ${integrity.effectiveStack.toFixed(1)} BB · SPR ${integrity.spr===null?"N/A":integrity.spr.toFixed(2)} · ${integrity.facingBet?"ENFRENTA APOSTA/RAISE":"SEM APOSTA A ENFRENTAR"} · AÇÕES LEGAIS ${legal.join(", ")}`;
-  const readiness=`RANGES ${integrity.rangeReady?"OK":"AUSENTES"} · BLOCKERS ${integrity.blockersReady?"OK":"INVÁLIDOS"} · EQUITY ${integrity.equityReady?"PRONTA":"BLOQUEADA"} · ICM ${integrity.icmReady?"OK":"INCOMPLETO"} · SOLVER ${integrity.solverReady?"PRONTO":"NÃO PRONTO"}`;
+  const readiness=`RANGES ${integrity.rangeReady?"OK":"AUSENTES"} · BLOCKERS ${integrity.blockersReady?"OK":"INVÁLIDOS"} · EQUITY ${integrity.equityReady?"ELEGÍVEL":"BLOQUEADA"} · ICM ${integrity.icmReady?"OK":"INCOMPLETO"} · PRÉ-REQUISITOS ${integrity.solverReady?"OK":"INCOMPLETOS"}`;
   const issues=integrity.issues.length?integrity.issues.join(" | "):"SEM INCONSISTÊNCIAS ESTRUTURAIS DETECTADAS";
-  const equityAudit=callFold.status==="EXACT_TERMINAL"?`EV CALL/FOLD TERMINAL DISPONÍVEL · EQUITY ${pct(callFold.equity)} · REQUIRED ${pct(callFold.requiredEquity)} · CALL EV ${(callFold.callEvBb??0).toFixed(3)} BB`:callFold.status==="EQUITY_ONLY"?`EQUITY DE SHOWDOWN ${pct(callFold.equity)} DISPONÍVEL, MAS EV DE CALL NÃO É FECHADO POR EXISTIREM DECISÕES FUTURAS`:`EV CALL/FOLD INDISPONÍVEL: ${callFold.issues.join(" / ")}`;
+  let equityAudit="";
+  if(multiway){
+    if(multiway.status==="OK"){
+      const hero=multiway.players.find(p=>p.position.toUpperCase()===state.hero.position.toUpperCase());
+      const villainSummary=multiway.players.filter(p=>p.position.toUpperCase()!==state.hero.position.toUpperCase()).map(p=>`${p.position.toUpperCase()} ${pct(p.equity)}`).join(" · ");
+      equityAudit=`EQUITY MULTIWAY EXATA · HERO ${pct(hero?.equity??null)} · ${villainSummary} · ${multiway.comboTuples} TUPLAS DE COMBOS · ${multiway.runouts} RUNOUTS. EV DE CALL/RAISE NÃO É INFERIDO SEM MODELAGEM EXATA DE SIDE POTS/RESPOSTAS.`;
+    }else equityAudit=`EQUITY MULTIWAY BLOQUEADA: ${multiway.issues.join(" / ")}`;
+  }else if(callFold.status==="EXACT_TERMINAL")equityAudit=`EV CALL/FOLD TERMINAL DISPONÍVEL · EQUITY ${pct(callFold.equity)} · REQUIRED ${pct(callFold.requiredEquity)} · CALL EV ${(callFold.callEvBb??0).toFixed(3)} BB`;
+  else if(callFold.status==="EQUITY_ONLY")equityAudit=`EQUITY DE SHOWDOWN ${pct(callFold.equity)} DISPONÍVEL, MAS EV DE CALL NÃO É FECHADO POR EXISTIREM DECISÕES FUTURAS`;
+  else equityAudit=`EV CALL/FOLD INDISPONÍVEL: ${callFold.issues.join(" / ")}`;
   const justification=!selectedIsLegal?`AÇÃO ${selectedAction} É ILEGAL NESTE NÓ. ${treeAudit}.`:deterministicJustification||`SEM SOLUÇÃO CONVERGIDA/VALIDADA, O APP NÃO ATRIBUI +EV/-EV GTO NEM FREQUÊNCIA GTO. O DIAGNÓSTICO INTERNO APONTA ${technical.bestAction} (${diagnosticVerdict}), APENAS COMO HIPÓTESE DE ESTUDO.`;
   const distribution:AdvancedRangeAction[]=legal.map(action=>({action_name:actionLabel(action,action===selectedAction?selectedSizing:undefined),frequency_percent:null,ev_status:"UNVALIDATED",note:callFold.status==="EXACT_TERMINAL"&&(action==="CALL"||action==="FOLD")?`EV TERMINAL DISPONÍVEL PARA CALL/FOLD; FREQUÊNCIA GTO CONTINUA NÃO VALIDADA.`:"FREQUÊNCIA E EV ESTRATÉGICO BLOQUEADOS ATÉ EXISTIR SOLUÇÃO GTO VALIDADA PARA ESTE NÓ."}));
   return{street_analysis:[{street:streetLabel[state.street],decision_point:decisionPoint,technical_evaluation:`INTEGRIDADE DO NÓ: ${treeAudit} | PRONTIDÃO: ${readiness} | EQUITY/EV: ${equityAudit} | PENDÊNCIAS: ${issues}`,action_classification:{verdict_code:verdictCode,verdict_label:verdictLabel,justification},range_action_distribution:{total_percentage:null,actions:distribution}}]};
