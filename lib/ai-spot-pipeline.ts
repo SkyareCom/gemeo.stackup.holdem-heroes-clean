@@ -4,134 +4,21 @@ import {validateAiSpotForAnalysis} from "@/lib/ai-spot-analysis-gate";
 import {canUseStackupAi,stackupAiAuthHeaders} from "@/lib/stackup-ai-subscription";
 
 export type AiSpotBatch={spots:PlayerDnaSpot[];model?:string;generatedAt?:string};
-export type AiSpotGenerationRequest={
-  count:number;
-  modes:("CASH"|"TORNEIO")[];
-  forbiddenFingerprints:string[];
-  requiredCoverage:string[];
-};
-
+export type AiSpotGenerationRequest={count:number;modes:("CASH"|"TORNEIO")[];forbiddenFingerprints:string[];requiredCoverage:string[]};
 const CACHE_KEY="stackup.player-dna.ai-spot-cache.v2";
 const AI_SOURCE_KEY="stackup.player-dna.ai-source-status.v2";
-const MAX_CACHE=512;
-const REFILL_TARGET=192;
-const REFILL_LOW_WATERMARK=64;
-const MAX_REFILL_ROUNDS=4;
-
+const MAX_CACHE=512,REFILL_TARGET=192,REFILL_LOW_WATERMARK=64,MAX_REFILL_ROUNDS=4;
 function browser(){return typeof window!=="undefined"&&typeof window.localStorage!=="undefined"}
 function text(value:unknown){return typeof value==="string"?value.trim():""}
 function num(value:unknown){return typeof value==="number"&&Number.isFinite(value)?value:NaN}
 function uniqueCards(cards:string[]){return new Set(cards.map(card=>card.toUpperCase())).size===cards.length}
-
-export function validateAiSpot(value:unknown):value is PlayerDnaSpot{
-  if(!value||typeof value!=="object")return false;
-  const spot=value as PlayerDnaSpot;
-  if(!["CASH","TORNEIO"].includes(spot.mode))return false;
-  if(!["PREFLOP","FLOP","TURN","RIVER"].includes(spot.street))return false;
-  if(!text(spot.id)||!text(spot.heroCards)||!Array.isArray(spot.players)||spot.players.length<2||spot.players.length>10)return false;
-  if(!spot.pot||!Number.isFinite(num(spot.pot.main))||spot.pot.main<=0)return false;
-  if(!Array.isArray(spot.scenario)||!Array.isArray(spot.actions)||spot.actions.length===0)return false;
-  if(spot.players.filter(player=>player.hero).length!==1)return false;
-  if(spot.players.some(player=>!text(player.position)||!Number.isFinite(num(player.stack))||player.stack<=0||!Number.isFinite(num(player.value))))return false;
-  const heroCards=spot.heroCards.split(" ").filter(Boolean);if(heroCards.length!==2||!uniqueCards(heroCards))return false;
-  const board=(spot.board??"").split(" ").filter(Boolean);
-  const expected=spot.street==="PREFLOP"?0:spot.street==="FLOP"?3:spot.street==="TURN"?4:5;
-  if(board.length!==expected||!uniqueCards([...heroCards,...board]))return false;
-  return true;
-}
-
+export function validateAiSpot(value:unknown):value is PlayerDnaSpot{if(!value||typeof value!=="object")return false;const spot=value as PlayerDnaSpot;if(!["CASH","TORNEIO"].includes(spot.mode)||!["PREFLOP","FLOP","TURN","RIVER"].includes(spot.street))return false;if(!text(spot.id)||!text(spot.heroCards)||!Array.isArray(spot.players)||spot.players.length<2||spot.players.length>10)return false;if(!spot.pot||!Number.isFinite(num(spot.pot.main))||spot.pot.main<=0)return false;if(!Array.isArray(spot.scenario)||!Array.isArray(spot.actions)||!spot.actions.length)return false;if(spot.players.filter(player=>player.hero).length!==1)return false;if(spot.players.some(player=>!text(player.position)||!Number.isFinite(num(player.stack))||player.stack<=0||!Number.isFinite(num(player.value))))return false;const heroCards=spot.heroCards.split(" ").filter(Boolean);if(heroCards.length!==2||!uniqueCards(heroCards))return false;const board=(spot.board??"").split(" ").filter(Boolean);const expected=spot.street==="PREFLOP"?0:spot.street==="FLOP"?3:spot.street==="TURN"?4:5;if(board.length!==expected||!uniqueCards([...heroCards,...board]))return false;return true}
 function analysisReady(spots:PlayerDnaSpot[]){return spots.filter(spot=>validateAiSpotForAnalysis(spot).status==="PASS")}
-
-export function loadCachedAiSpots():PlayerDnaSpot[]{
-  if(!browser())return[];
-  try{
-    const raw=window.localStorage.getItem(CACHE_KEY);const parsed=raw?JSON.parse(raw):[];
-    return Array.isArray(parsed)?analysisReady(parsed.filter(validateAiSpot)):[];
-  }catch{return[]}
-}
-
-export function cacheAiSpots(spots:PlayerDnaSpot[]){
-  if(!browser())return;
-  const unique=new Map<string,PlayerDnaSpot>();
-  for(const spot of [...analysisReady(spots),...loadCachedAiSpots()])unique.set(exactSpotFingerprint(spot),spot);
-  const next=[...unique.values()].slice(0,MAX_CACHE);
-  try{window.localStorage.setItem(CACHE_KEY,JSON.stringify(next))}catch{}
-}
-
-export function applyAiRuntimeBank(runtimeBank:PlayerDnaSpot[],offlineBank:PlayerDnaSpot[],aiSpots:PlayerDnaSpot[]){
-  const valid=analysisReady(aiSpots);
-  if(!valid.length){
-    const validatedOffline=analysisReady(offlineBank);
-    runtimeBank.splice(0,runtimeBank.length,...validatedOffline);
-    return"OFFLINE" as const;
-  }
-  const unique=new Map<string,PlayerDnaSpot>();for(const spot of valid)unique.set(exactSpotFingerprint(spot),spot);
-  runtimeBank.splice(0,runtimeBank.length,...unique.values());
-  return"AI" as const;
-}
-
-export async function requestAiSpotBatch(request:AiSpotGenerationRequest):Promise<AiSpotBatch|null>{
-  if(typeof navigator!=="undefined"&&!navigator.onLine)return null;
-  if(browser()&&!canUseStackupAi("spotGeneration"))return null;
-  const gateway=process.env.NEXT_PUBLIC_STACKUP_AI_GATEWAY_URL?.trim();
-  const endpoint=(gateway?`${gateway.replace(/\/$/,"")}/v1/spots/generate`:process.env.NEXT_PUBLIC_STACKUP_SPOT_AI_ENDPOINT?.trim())||"";
-  if(!endpoint)return null;
-  const response=await fetch(endpoint,{method:"POST",headers:{"content-type":"application/json",...stackupAiAuthHeaders()},body:JSON.stringify({
-    ...request,
-    contract:{
-      task:"GENERATE_UNSEEN_ANALYSIS_READY_NO_LIMIT_HOLDEM_SPOTS",
-      rules:[
-        "RETURN ONLY INTERNALLY COHERENT NO-LIMIT HOLD'EM STATES",
-        "EVERY SPOT MUST BE READY FOR THE STACKUP ANALYSIS PIPELINE BEFORE IT IS SHOWN",
-        "INCLUDE EXACT HERO TO-CALL, CURRENT BET, LEGAL ACTIONS, ACTION HISTORY AND TOTAL COMMITMENTS",
-        "INCLUDE WEIGHTED HERO AND VILLAIN RANGES CONSISTENT WITH POSITIONS, ACTION HISTORY AND CARD REMOVAL",
-        "CASH SPOTS MUST INCLUDE RAKE PERCENTAGE; DO NOT ASSUME RAKE",
-        "TOURNAMENT SPOTS MUST INCLUDE PAYOUTS AND FIELD STACKS WHEN ICM/RISK PREMIUM IS RELEVANT",
-        "MULTIWAY SPOTS MUST INCLUDE COMPLETE COMMITMENTS SO MAIN/SIDE POTS RECONCILE EXACTLY",
-        "VARY POSITIONS STACKS STREETS BOARDS ACTION HISTORIES SIZINGS TABLE SIZES AND TOURNAMENT CONTEXT",
-        "DO NOT INVENT SOLVER EV, GTO FREQUENCIES OR A BEST ACTION",
-        "THE AI GENERATES THE STATE; THE STACKUP ANALYSIS ENGINE JUDGES THE PLAYER ACTION SEPARATELY",
-        "NEVER RETURN A FORBIDDEN FINGERPRINT OR DUPLICATE STATE"
-      ]
-    }
-  })});
-  if(response.status===401||response.status===402||response.status===403||response.status===429)throw new Error(`STACKUP_AI_ENTITLEMENT_${response.status}`);
-  if(!response.ok)throw new Error(`STACKUP AI SPOT ENDPOINT ${response.status}`);
-  const data=await response.json() as AiSpotBatch;
-  if(!data||!Array.isArray(data.spots))return null;
-  const spots=analysisReady(data.spots.filter(validateAiSpot));
-  return{...data,spots};
-}
-
+function structurallySafe(spots:PlayerDnaSpot[]){return spots.filter(validateAiSpot)}
+export function loadCachedAiSpots():PlayerDnaSpot[]{if(!browser())return[];try{const raw=window.localStorage.getItem(CACHE_KEY);const parsed=raw?JSON.parse(raw):[];return Array.isArray(parsed)?analysisReady(parsed.filter(validateAiSpot)):[]}catch{return[]}}
+export function cacheAiSpots(spots:PlayerDnaSpot[]){if(!browser())return;const unique=new Map<string,PlayerDnaSpot>();for(const spot of [...analysisReady(spots),...loadCachedAiSpots()])unique.set(exactSpotFingerprint(spot),spot);try{window.localStorage.setItem(CACHE_KEY,JSON.stringify([...unique.values()].slice(0,MAX_CACHE)))}catch{}}
+export function applyAiRuntimeBank(runtimeBank:PlayerDnaSpot[],offlineBank:PlayerDnaSpot[],aiSpots:PlayerDnaSpot[]){const valid=analysisReady(aiSpots);if(!valid.length){const safeOffline=structurallySafe(offlineBank);runtimeBank.splice(0,runtimeBank.length,...safeOffline);return"OFFLINE" as const}const unique=new Map<string,PlayerDnaSpot>();for(const spot of valid)unique.set(exactSpotFingerprint(spot),spot);runtimeBank.splice(0,runtimeBank.length,...unique.values());return"AI" as const}
+export async function requestAiSpotBatch(request:AiSpotGenerationRequest):Promise<AiSpotBatch|null>{if(typeof navigator!=="undefined"&&!navigator.onLine)return null;if(browser()&&!canUseStackupAi("spotGeneration"))return null;const gateway=process.env.NEXT_PUBLIC_STACKUP_AI_GATEWAY_URL?.trim();const endpoint=(gateway?`${gateway.replace(/\/$/,"")}/v1/spots/generate`:process.env.NEXT_PUBLIC_STACKUP_SPOT_AI_ENDPOINT?.trim())||"";if(!endpoint)return null;const response=await fetch(endpoint,{method:"POST",headers:{"content-type":"application/json",...stackupAiAuthHeaders()},body:JSON.stringify({...request,contract:{task:"GENERATE_UNSEEN_ANALYSIS_READY_NO_LIMIT_HOLDEM_SPOTS",rules:["RETURN ONLY INTERNALLY COHERENT NO-LIMIT HOLD'EM STATES","EVERY SPOT MUST BE READY FOR THE STACKUP ANALYSIS PIPELINE BEFORE IT IS SHOWN","INCLUDE EXACT HERO TO-CALL, CURRENT BET, LEGAL ACTIONS, ACTION HISTORY AND TOTAL COMMITMENTS","INCLUDE WEIGHTED HERO AND VILLAIN RANGES CONSISTENT WITH POSITIONS, ACTION HISTORY AND CARD REMOVAL","CASH SPOTS MUST INCLUDE RAKE PERCENTAGE; DO NOT ASSUME RAKE","TOURNAMENT SPOTS MUST INCLUDE PAYOUTS AND FIELD STACKS WHEN ICM/RISK PREMIUM IS RELEVANT","MULTIWAY SPOTS MUST INCLUDE COMPLETE COMMITMENTS SO MAIN/SIDE POTS RECONCILE EXACTLY","VARY POSITIONS STACKS STREETS BOARDS ACTION HISTORIES SIZINGS TABLE SIZES AND TOURNAMENT CONTEXT","DO NOT INVENT SOLVER EV, GTO FREQUENCIES OR A BEST ACTION","THE AI GENERATES THE STATE; THE STACKUP ANALYSIS ENGINE JUDGES THE PLAYER ACTION SEPARATELY","NEVER RETURN A FORBIDDEN FINGERPRINT OR DUPLICATE STATE"]}})});if(response.status===401||response.status===402||response.status===403||response.status===429)throw new Error(`STACKUP_AI_ENTITLEMENT_${response.status}`);if(!response.ok)throw new Error(`STACKUP AI SPOT ENDPOINT ${response.status}`);const data=await response.json() as AiSpotBatch;if(!data||!Array.isArray(data.spots))return null;return{...data,spots:analysisReady(data.spots.filter(validateAiSpot))}}
 const REQUIRED_COVERAGE=["PREFLOP","FLOP","TURN","RIVER","HEADS-UP","MULTIWAY","6-MAX","8-MAX","9-MAX","10-MAX","SRP","3-BET","4-BET","SQUEEZE","BLIND WAR","ALL-IN","SIDE POT","OVERBET","IP","OOP","SHORT","MEDIUM","DEEP","EARLY","MID","BOLHA","ITM","FT","ICM"];
-
-export async function refillAiSpotSupply(existing:PlayerDnaSpot[],forbiddenFingerprints:string[]=[]){
-  const unique=new Map<string,PlayerDnaSpot>();
-  for(const spot of analysisReady(existing))unique.set(exactSpotFingerprint(spot),spot);
-  const forbidden=new Set(forbiddenFingerprints);
-  for(const key of unique.keys())forbidden.add(key);
-  let rounds=0,model:string|undefined;
-  while(unique.size<REFILL_TARGET&&rounds<MAX_REFILL_ROUNDS){
-    rounds++;
-    const batch=await requestAiSpotBatch({count:Math.min(96,REFILL_TARGET-unique.size),modes:["CASH","TORNEIO"],forbiddenFingerprints:[...forbidden].slice(-10000),requiredCoverage:REQUIRED_COVERAGE});
-    if(!batch?.spots.length)break;
-    model=batch.model??model;
-    for(const spot of batch.spots){const fingerprint=exactSpotFingerprint(spot);if(forbidden.has(fingerprint))continue;forbidden.add(fingerprint);unique.set(fingerprint,spot)}
-  }
-  return{spots:[...unique.values()].slice(0,MAX_CACHE),rounds,model};
-}
-
-export async function refreshAiSpotBank(runtimeBank:PlayerDnaSpot[],offlineBank:PlayerDnaSpot[],forbiddenFingerprints:string[]=[]){
-  const cached=loadCachedAiSpots();if(cached.length)applyAiRuntimeBank(runtimeBank,offlineBank,cached);
-  try{
-    const seed=cached.length>=REFILL_LOW_WATERMARK?cached:[];
-    const refill=await refillAiSpotSupply(seed,forbiddenFingerprints);
-    if(!refill.spots.length){if(!cached.length)applyAiRuntimeBank(runtimeBank,offlineBank,[]);return{source:cached.length?"CACHE":"OFFLINE",count:cached.length}}
-    cacheAiSpots(refill.spots);const source=applyAiRuntimeBank(runtimeBank,offlineBank,refill.spots);
-    if(browser())window.localStorage.setItem(AI_SOURCE_KEY,JSON.stringify({source,count:refill.spots.length,at:Date.now(),model:refill.model??null,analysisGate:"PASS_ONLY",rounds:refill.rounds}));
-    return{source,count:refill.spots.length};
-  }catch{
-    if(!cached.length)applyAiRuntimeBank(runtimeBank,offlineBank,[]);
-    return{source:cached.length?"CACHE":"OFFLINE",count:cached.length};
-  }
-}
+export async function refillAiSpotSupply(existing:PlayerDnaSpot[],forbiddenFingerprints:string[]=[]){const unique=new Map<string,PlayerDnaSpot>();for(const spot of analysisReady(existing))unique.set(exactSpotFingerprint(spot),spot);const forbidden=new Set(forbiddenFingerprints);for(const key of unique.keys())forbidden.add(key);let rounds=0,model:string|undefined;while(unique.size<REFILL_TARGET&&rounds<MAX_REFILL_ROUNDS){rounds++;const batch=await requestAiSpotBatch({count:Math.min(96,REFILL_TARGET-unique.size),modes:["CASH","TORNEIO"],forbiddenFingerprints:[...forbidden].slice(-10000),requiredCoverage:REQUIRED_COVERAGE});if(!batch?.spots.length)break;model=batch.model??model;for(const spot of batch.spots){const fingerprint=exactSpotFingerprint(spot);if(forbidden.has(fingerprint))continue;forbidden.add(fingerprint);unique.set(fingerprint,spot)}}return{spots:[...unique.values()].slice(0,MAX_CACHE),rounds,model}}
+export async function refreshAiSpotBank(runtimeBank:PlayerDnaSpot[],offlineBank:PlayerDnaSpot[],forbiddenFingerprints:string[]=[]){const cached=loadCachedAiSpots();if(cached.length)applyAiRuntimeBank(runtimeBank,offlineBank,cached);try{const seed=cached.length>=REFILL_LOW_WATERMARK?cached:[];const refill=await refillAiSpotSupply(seed,forbiddenFingerprints);if(!refill.spots.length){if(!cached.length)applyAiRuntimeBank(runtimeBank,offlineBank,[]);return{source:cached.length?"CACHE":"OFFLINE",count:cached.length||structurallySafe(offlineBank).length}}cacheAiSpots(refill.spots);const source=applyAiRuntimeBank(runtimeBank,offlineBank,refill.spots);if(browser())window.localStorage.setItem(AI_SOURCE_KEY,JSON.stringify({source,count:refill.spots.length,at:Date.now(),model:refill.model??null,analysisGate:"PASS_ONLY",rounds:refill.rounds}));return{source,count:refill.spots.length}}catch{if(!cached.length)applyAiRuntimeBank(runtimeBank,offlineBank,[]);return{source:cached.length?"CACHE":"OFFLINE",count:cached.length||structurallySafe(offlineBank).length}}}
