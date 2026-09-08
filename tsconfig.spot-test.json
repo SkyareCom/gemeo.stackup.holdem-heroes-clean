@@ -18,6 +18,7 @@
     "tests/gto-reference-validation.ts",
     "tests/gto-benchmark-corpus.ts",
     "tests/gto-commercial-readiness.ts",
+    "tests/gto-solve-import.ts",
     "lib/player-dna-generation.ts",
     "lib/player-dna-sampler.ts",
     "lib/player-dna-technical-analysis.ts",
@@ -25,6 +26,7 @@
     "lib/gto-reference-validation.ts",
     "lib/gto-benchmark-corpus.ts",
     "lib/gto-commercial-readiness.ts",
+    "lib/gto-solve-import.ts",
     "lib/spot-identity.ts",
     "data/player-dna-spots.ts"
   ],
