@@ -18,7 +18,13 @@ function seenFingerprints(){
 export default function PlayerDnaAiSpotReplenisher(){
   useEffect(()=>{
     let cancelled=false,busy=false;
-    const refresh=async()=>{if(cancelled||busy)return;busy=true;try{await refreshAiSpotBank(playerDnaSpots,OFFLINE_BANK,seenFingerprints())}finally{busy=false}};
+    const refresh=async()=>{
+      if(cancelled||busy)return;busy=true;
+      try{
+        const result=await refreshAiSpotBank(playerDnaSpots,OFFLINE_BANK,seenFingerprints());
+        if(!cancelled)window.dispatchEvent(new CustomEvent("stackup:player-dna-bank-updated",{detail:result}));
+      }finally{busy=false}
+    };
     void refresh();
     const timer=window.setInterval(()=>void refresh(),REFRESH_MS);
     const online=()=>void refresh();
