@@ -1,9 +1,11 @@
 import type {PlayerAction} from "@/data/player-dna-spots";
+import type {WeightedRangeEntry} from "@/lib/gto-range-engine";
 
 export type SolverMode="CASH"|"TORNEIO";
 export type SolverStreet="PREFLOP"|"FLOP"|"TURN"|"RIVER";
 export type SolverPlayer={position:string;stack:number;action:string;value:number};
 export type SolverActionHistory={position:string;action:string;value:number};
+export type SolverNodeRanges={hero?:WeightedRangeEntry[];villains?:Record<string,WeightedRangeEntry[]>};
 export type SolverSpotState={
   mode:SolverMode;
   street:SolverStreet;
@@ -22,6 +24,7 @@ export type SolverSpotState={
   payouts?:number[];
   fieldStacks?:number[];
   bounties?:number[];
+  ranges?:SolverNodeRanges;
 };
 
 export type SolverActionReference={frequency:number;evBb:number};
@@ -34,7 +37,8 @@ function finite(value:number){return Number.isFinite(value)?round(value,4):0}
 function upper(value:string){return value.trim().toUpperCase()}
 function hashText(value:string){let hash=2166136261;for(let i=0;i<value.length;i++){hash^=value.charCodeAt(i);hash=Math.imul(hash,16777619)}return(hash>>>0).toString(36)}
 function heroBlind(position:string,street:SolverStreet){if(street!=="PREFLOP")return 0;if(position==="SB")return .5;if(position==="BB")return 1;return 0}
-export function canonicalSolverState(state:SolverSpotState){return{mode:state.mode,street:state.street,hero:{position:upper(state.hero.position),stack:finite(state.hero.stack),cards:state.hero.cards.map(upper).join(" ")},board:state.board.map(upper).join(" "),pot:finite(state.pot),potSides:(state.potSides??[]).map(side=>({value:finite(side.value),players:[...side.players].map(upper).sort()})),players:[...state.players].map(player=>({position:upper(player.position),stack:finite(player.stack),action:upper(player.action),value:finite(player.value)})).sort((a,b)=>a.position.localeCompare(b.position)),scenario:[...state.scenario].map(upper).sort(),actionHistory:(state.actionHistory??[]).map(item=>({position:upper(item.position),action:upper(item.action),value:finite(item.value)})),heroToCall:state.heroToCall===undefined?null:finite(state.heroToCall),currentBet:state.currentBet===undefined?null:finite(state.currentBet),legalActions:state.legalActions?.map(upper).sort()??null,rakePct:state.rakePct===undefined?null:finite(state.rakePct),anteBb:state.anteBb===undefined?null:finite(state.anteBb),payouts:state.payouts?.map(finite)??null,fieldStacks:state.fieldStacks?.map(finite)??null,bounties:state.bounties?.map(finite)??null}}
+function canonicalRange(entries:WeightedRangeEntry[]|undefined){return entries?.map(entry=>({hand:upper(entry.hand),weight:finite(entry.weight)})).sort((a,b)=>a.hand.localeCompare(b.hand)||a.weight-b.weight)??null}
+export function canonicalSolverState(state:SolverSpotState){return{mode:state.mode,street:state.street,hero:{position:upper(state.hero.position),stack:finite(state.hero.stack),cards:state.hero.cards.map(upper).join(" ")},board:state.board.map(upper).join(" "),pot:finite(state.pot),potSides:(state.potSides??[]).map(side=>({value:finite(side.value),players:[...side.players].map(upper).sort()})),players:[...state.players].map(player=>({position:upper(player.position),stack:finite(player.stack),action:upper(player.action),value:finite(player.value)})).sort((a,b)=>a.position.localeCompare(b.position)),scenario:[...state.scenario].map(upper).sort(),actionHistory:(state.actionHistory??[]).map(item=>({position:upper(item.position),action:upper(item.action),value:finite(item.value)})),heroToCall:state.heroToCall===undefined?null:finite(state.heroToCall),currentBet:state.currentBet===undefined?null:finite(state.currentBet),legalActions:state.legalActions?.map(upper).sort()??null,rakePct:state.rakePct===undefined?null:finite(state.rakePct),anteBb:state.anteBb===undefined?null:finite(state.anteBb),payouts:state.payouts?.map(finite)??null,fieldStacks:state.fieldStacks?.map(finite)??null,bounties:state.bounties?.map(finite)??null,ranges:state.ranges?{hero:canonicalRange(state.ranges.hero),villains:Object.fromEntries(Object.entries(state.ranges.villains??{}).sort(([a],[b])=>a.localeCompare(b)).map(([position,range])=>[upper(position),canonicalRange(range)]))}:null}}
 export function solverFingerprint(state:SolverSpotState){return`stk2-${hashText(JSON.stringify(canonicalSolverState(state)))}`}
 function validReference(reference:SolverReference){if(!reference?.fingerprint||!reference.actions)return false;const entries=Object.values(reference.actions).filter(Boolean) as SolverActionReference[];if(!entries.length)return false;if(entries.some(entry=>!Number.isFinite(entry.frequency)||entry.frequency<0||entry.frequency>100||!Number.isFinite(entry.evBb)))return false;const sum=entries.reduce((s,e)=>s+e.frequency,0);return sum>=99&&sum<=101}
 export function setSolverReferences(next:SolverReference[]){const unique=new Map<string,SolverReference>();for(const reference of next)if(validReference(reference))unique.set(reference.fingerprint,reference);references=[...unique.values()];return references.length}
