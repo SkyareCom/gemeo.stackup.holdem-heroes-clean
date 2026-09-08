@@ -72,9 +72,8 @@ export function inspectGtoNode(state:SolverSpotState,declared:PlayerAction[]):Gt
   const postflopBoardReady=state.board.length>=3&&state.board.length<=5;
   if(state.board.length>5)issues.push("BOARD POSSUI MAIS DE 5 CARTAS.");
   if(state.street!=="PREFLOP"&&!postflopBoardReady)issues.push("BOARD INCOMPLETO PARA CÁLCULO EXAUSTIVO DE EQUITY PÓS-FLOP.");
-  const headsUp=active.length===1;
-  if(active.length>1)issues.push("EQUITY MULTIWAY EXAUSTIVA AINDA NÃO HABILITADA; NÃO CONVERTER EQUITY HU EM RESULTADO MULTIWAY.");
-  const equityReady=blockersReady&&headsUp&&postflopBoardReady&&Boolean(villainEntries[0]?.[1]?.length);
+  const equityReady=blockersReady&&postflopBoardReady&&villainsReady&&active.length>=1;
+  if(active.length>1&&equityReady)issues.push("EQUITY MULTIWAY USA ENUMERAÇÃO EXATA COM LIMITE DE SEGURANÇA; SE O ESPAÇO DE ESTADOS EXCEDER O LIMITE, O RESULTADO É BLOQUEADO EM VEZ DE AMOSTRADO.");
 
   const icmReady=state.mode!=="TORNEIO"||Boolean(state.payouts?.length&&state.fieldStacks?.length);
   if(state.mode==="TORNEIO"&&!icmReady)issues.push("DADOS DE PAYOUT/FIELD INCOMPLETOS; ICM/RISK PREMIUM EXATO NÃO PODE SER CALCULADO.");
