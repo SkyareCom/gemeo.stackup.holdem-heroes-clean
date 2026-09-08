@@ -10,6 +10,7 @@ export type StackupAiGatewayStore={
 };
 
 export type StackupSpotGenerator=(request:AiSpotGenerationRequest)=>Promise<AiSpotBatch>;
+export type StackupAiBillingRejectCode="SUBSCRIPTION_INACTIVE"|"FEATURE_NOT_INCLUDED"|"REQUEST_LIMIT"|"INSUFFICIENT_CREDITS";
 export type StackupAiGatewayResult={
   ok:true;
   batch:AiSpotBatch;
@@ -17,34 +18,27 @@ export type StackupAiGatewayResult={
   chargedCredits:number;
 }|{
   ok:false;
-  code:"SUBSCRIPTION_NOT_FOUND"|"WALLET_NOT_FOUND"|"SUBSCRIPTION_INACTIVE"|"FEATURE_NOT_INCLUDED"|"REQUEST_LIMIT"|"INSUFFICIENT_CREDITS"|"DUPLICATE_REQUEST"|"PROVIDER_ERROR";
+  code:"SUBSCRIPTION_NOT_FOUND"|"WALLET_NOT_FOUND"|StackupAiBillingRejectCode|"DUPLICATE_REQUEST"|"PROVIDER_ERROR";
   remainingAiCredits?:number;
 };
 
-export function estimateSpotGenerationCredits(request:AiSpotGenerationRequest){
-  return Math.max(1,Math.ceil(Math.max(1,request.count)/4));
+export function estimateSpotGenerationCredits(request:AiSpotGenerationRequest){return Math.max(1,Math.ceil(Math.max(1,request.count)/4))}
+export function actualSpotGenerationCredits(batch:AiSpotBatch){return Math.max(1,Math.ceil(Math.max(1,batch.spots.length)/4))}
+function billingCode(value:string):StackupAiBillingRejectCode{
+  if(value==="SUBSCRIPTION_INACTIVE"||value==="FEATURE_NOT_INCLUDED"||value==="REQUEST_LIMIT"||value==="INSUFFICIENT_CREDITS")return value;
+  return"SUBSCRIPTION_INACTIVE";
 }
 
-export function actualSpotGenerationCredits(batch:AiSpotBatch){
-  return Math.max(1,Math.ceil(Math.max(1,batch.spots.length)/4));
-}
-
-export async function runPaidSpotGeneration(args:{
-  userId:string;
-  requestId:string;
-  request:AiSpotGenerationRequest;
-  store:StackupAiGatewayStore;
-  generate:StackupSpotGenerator;
-}):Promise<StackupAiGatewayResult>{
+export async function runPaidSpotGeneration(args:{userId:string;requestId:string;request:AiSpotGenerationRequest;store:StackupAiGatewayStore;generate:StackupSpotGenerator}):Promise<StackupAiGatewayResult>{
   const {userId,requestId,request,store,generate}=args;
   if(store.hasCompletedRequest&&await store.hasCompletedRequest(requestId))return{ok:false,code:"DUPLICATE_REQUEST"};
   const subscription=await store.getSubscription(userId);if(!subscription)return{ok:false,code:"SUBSCRIPTION_NOT_FOUND"};
   const wallet=await store.getWallet(userId);if(!wallet)return{ok:false,code:"WALLET_NOT_FOUND"};
   const requestedCredits=estimateSpotGenerationCredits(request);
   const gate=canUseAi(subscription,wallet,"SPOT_GENERATION",requestedCredits);
-  if(!gate.ok)return{ok:false,code:gate.reason,remainingAiCredits:availableCredits(wallet)};
+  if(!gate.ok)return{ok:false,code:billingCode(gate.reason),remainingAiCredits:availableCredits(wallet)};
   const reserved=reserveCredits(wallet,subscription,"SPOT_GENERATION",requestedCredits,requestId);
-  if(!reserved.ok)return{ok:false,code:reserved.reason,remainingAiCredits:availableCredits(wallet)};
+  if(!reserved.ok)return{ok:false,code:billingCode(reserved.reason),remainingAiCredits:availableCredits(wallet)};
   const reservation:StackupUsageReservation=reserved.reservation;
   await store.saveWallet(reserved.wallet);
   try{
