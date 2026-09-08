@@ -1,6 +1,7 @@
 import type {PlayerAction} from "@/data/player-dna-spots";
 import type {SolverSpotState} from "@/lib/player-dna-solver-v2";
 import {normalizeWeightedRange,rangeHasValidCombos} from "@/lib/gto-range-engine";
+import {buildExactPotAccounting} from "@/lib/gto-pot-accounting";
 
 export type GtoNodeIntegrity={
   legalActions:PlayerAction[];
@@ -12,6 +13,8 @@ export type GtoNodeIntegrity={
   spr:number|null;
   rangeReady:boolean;
   equityReady:boolean;
+  potAccountingReady:boolean;
+  potLayerCount:number;
   icmReady:boolean;
   solverReady:boolean;
   blockersReady:boolean;
@@ -75,8 +78,14 @@ export function inspectGtoNode(state:SolverSpotState,declared:PlayerAction[]):Gt
   const equityReady=blockersReady&&postflopBoardReady&&villainsReady&&active.length>=1;
   if(active.length>1&&equityReady)issues.push("EQUITY MULTIWAY USA ENUMERAÇÃO EXATA COM LIMITE DE SEGURANÇA; SE O ESPAÇO DE ESTADOS EXCEDER O LIMITE, O RESULTADO É BLOQUEADO EM VEZ DE AMOSTRADO.");
 
+  const potAccounting=buildExactPotAccounting(state);
+  const potAccountingReady=potAccounting.status==="OK"&&potAccounting.reconciliationDeltaBb!==null&&Math.abs(potAccounting.reconciliationDeltaBb)<=.01;
+  if(potAccounting.status!=="OK")issues.push(...potAccounting.issues);
+  else if(!potAccountingReady)issues.push(...potAccounting.issues);
+  else if(potAccounting.pots.length>1)issues.push(`SIDE POTS EXATOS DISPONÍVEIS: ${potAccounting.pots.length} CAMADAS.`);
+
   const icmReady=state.mode!=="TORNEIO"||Boolean(state.payouts?.length&&state.fieldStacks?.length);
   if(state.mode==="TORNEIO"&&!icmReady)issues.push("DADOS DE PAYOUT/FIELD INCOMPLETOS; ICM/RISK PREMIUM EXATO NÃO PODE SER CALCULADO.");
-  const solverReady=rangeReady&&equityReady&&icmReady&&!issues.some(issue=>issue.includes("AÇÕES IMPOSSÍVEIS")||issue.includes("CARTAS AUSENTES")||issue.includes("INCOMPATÍVEIS"));
-  return{legalActions,facingBet,toCall,potBeforeCall,potOdds,effectiveStack,spr,rangeReady,equityReady,icmReady,solverReady,blockersReady,heroRangeCombos:heroNormalized?.combos.length??0,villainRangeCombos,blockedVillainCombos,issues};
+  const solverReady=rangeReady&&equityReady&&icmReady&&(!active.length||active.length===1||potAccountingReady)&&!issues.some(issue=>issue.includes("AÇÕES IMPOSSÍVEIS")||issue.includes("CARTAS AUSENTES")||issue.includes("INCOMPATÍVEIS"));
+  return{legalActions,facingBet,toCall,potBeforeCall,potOdds,effectiveStack,spr,rangeReady,equityReady,potAccountingReady,potLayerCount:potAccounting.pots.length,icmReady,solverReady,blockersReady,heroRangeCombos:heroNormalized?.combos.length??0,villainRangeCombos,blockedVillainCombos,issues};
 }
