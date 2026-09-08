@@ -16,11 +16,13 @@
     "tests/spot-generation-stress.ts",
     "tests/player-dna-diagnostic-sanity.ts",
     "tests/gto-reference-validation.ts",
+    "tests/gto-benchmark-corpus.ts",
     "lib/player-dna-generation.ts",
     "lib/player-dna-sampler.ts",
     "lib/player-dna-technical-analysis.ts",
     "lib/player-dna-solver-v2.ts",
     "lib/gto-reference-validation.ts",
+    "lib/gto-benchmark-corpus.ts",
     "lib/spot-identity.ts",
     "data/player-dna-spots.ts"
   ],
