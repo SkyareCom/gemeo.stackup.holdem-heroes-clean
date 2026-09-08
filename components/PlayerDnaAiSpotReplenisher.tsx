@@ -2,11 +2,10 @@
 
 import {useEffect} from "react";
 import {playerDnaSpots} from "@/data/player-dna-spots";
-import {refreshAiSpotBank} from "@/lib/ai-spot-pipeline";
+import {refreshCertifiedSpotBank} from "@/lib/certified-ai-spot-pipeline";
 
-const OFFLINE_BANK=[...playerDnaSpots];
 const SEEN_REGISTRY_KEY="stackup.player-dna.seen-spots.v2";
-const REFRESH_MS=3*60*1000;
+const REFRESH_MS=2*60*1000;
 
 function seenFingerprints(){
   try{
@@ -21,8 +20,10 @@ export default function PlayerDnaAiSpotReplenisher(){
     const refresh=async()=>{
       if(cancelled||busy)return;busy=true;
       try{
-        const result=await refreshAiSpotBank(playerDnaSpots,OFFLINE_BANK,seenFingerprints());
+        const result=await refreshCertifiedSpotBank(playerDnaSpots,seenFingerprints());
         if(!cancelled)window.dispatchEvent(new CustomEvent("stackup:player-dna-bank-updated",{detail:result}));
+      }catch{
+        if(!cancelled)window.dispatchEvent(new CustomEvent("stackup:player-dna-bank-updated",{detail:{source:"ERROR",count:0}}));
       }finally{busy=false}
     };
     void refresh();
