@@ -1,5 +1,6 @@
 import type {PlayerAction} from "@/data/player-dna-spots";
 import type {SolverSpotState} from "@/lib/player-dna-solver-v2";
+import {normalizeWeightedRange,rangeHasValidCombos} from "@/lib/gto-range-engine";
 
 export type GtoNodeIntegrity={
   legalActions:PlayerAction[];
@@ -13,6 +14,9 @@ export type GtoNodeIntegrity={
   icmReady:boolean;
   solverReady:boolean;
   blockersReady:boolean;
+  heroRangeCombos:number;
+  villainRangeCombos:number;
+  blockedVillainCombos:number;
   issues:string[];
 };
 
@@ -40,12 +44,32 @@ export function inspectGtoNode(state:SolverSpotState,declared:PlayerAction[]):Gt
   const potOdds=facingBet&&potBeforeCall+toCall>0?toCall/(potBeforeCall+toCall):null;
   const effectiveStack=Math.max(0,Math.min(state.hero.stack,...(active.length?active.map(p=>p.stack):[state.hero.stack])));
   const spr=potBeforeCall>0?effectiveStack/potBeforeCall:null;
-  const blockersReady=state.hero.cards.length===2&&new Set([...state.hero.cards,...state.board]).size===state.hero.cards.length+state.board.length;
+  const visibleCards=[...state.hero.cards,...state.board];
+  const canonicalVisible=visibleCards.map(card=>card.trim().toUpperCase());
+  const blockersReady=state.hero.cards.length===2&&new Set(canonicalVisible).size===canonicalVisible.length;
   if(!blockersReady)issues.push("CARTAS AUSENTES OU DUPLICADAS; CARD REMOVAL/BLOCKERS NÃO SÃO CONFIÁVEIS.");
-  const rangeReady=false;
-  issues.push("RANGES PONDERADOS DO NÓ NÃO FORAM FORNECIDOS; EQUITY DE RANGE, EQR E FREQUÊNCIAS GTO NÃO PODEM SER INFERIDOS.");
+
+  const heroRange=state.ranges?.hero;
+  const heroNormalized=heroRange?.length?normalizeWeightedRange(heroRange,state.board):null;
+  const villainEntries=Object.entries(state.ranges?.villains??{}).filter(([position])=>active.some(player=>player.position.toUpperCase()===position.toUpperCase()));
+  let villainRangeCombos=0,blockedVillainCombos=0,villainsReady=villainEntries.length===active.length&&active.length>0;
+  for(const player of active){
+    const entry=villainEntries.find(([position])=>position.toUpperCase()===player.position.toUpperCase());
+    if(!entry){villainsReady=false;issues.push(`RANGE AUSENTE PARA ${player.position.toUpperCase()}.`);continue}
+    const normalized=normalizeWeightedRange(entry[1],visibleCards);
+    villainRangeCombos+=normalized.combos.length;
+    blockedVillainCombos+=normalized.blockedCombos;
+    if(!normalized.combos.length){villainsReady=false;issues.push(`RANGE DE ${player.position.toUpperCase()} FICOU SEM COMBOS VÁLIDOS APÓS CARD REMOVAL.`)}
+    if(normalized.invalidEntries.length)issues.push(`RANGE DE ${player.position.toUpperCase()} CONTÉM ENTRADAS INVÁLIDAS: ${normalized.invalidEntries.join(", ")}.`)
+  }
+  const heroRangeReady=rangeHasValidCombos(heroRange,state.board);
+  if(!heroRangeReady)issues.push("RANGE PONDERADO DO HERO AUSENTE OU INVÁLIDO.");
+  if(!active.length)issues.push("SEM ADVERSÁRIO ATIVO PARA ANÁLISE DE RANGE.");
+  const rangeReady=heroRangeReady&&villainsReady;
+  if(!rangeReady)issues.push("RANGES PONDERADOS DO NÓ INCOMPLETOS; EQUITY DE RANGE, EQR E FREQUÊNCIAS GTO NÃO PODEM SER INFERIDOS.");
+
   const icmReady=state.mode!=="TORNEIO"||Boolean(state.payouts?.length&&state.fieldStacks?.length);
   if(state.mode==="TORNEIO"&&!icmReady)issues.push("DADOS DE PAYOUT/FIELD INCOMPLETOS; ICM/RISK PREMIUM EXATO NÃO PODE SER CALCULADO.");
-  const solverReady=rangeReady&&blockersReady&&icmReady&&issues.length===0;
-  return{legalActions,facingBet,toCall,potBeforeCall,potOdds,effectiveStack,spr,rangeReady,icmReady,solverReady,blockersReady,issues};
+  const solverReady=rangeReady&&blockersReady&&icmReady&&!issues.some(issue=>issue.includes("AÇÕES IMPOSSÍVEIS")||issue.includes("CARTAS AUSENTES")||issue.includes("INCOMPATÍVEIS"));
+  return{legalActions,facingBet,toCall,potBeforeCall,potOdds,effectiveStack,spr,rangeReady,icmReady,solverReady,blockersReady,heroRangeCombos:heroNormalized?.combos.length??0,villainRangeCombos,blockedVillainCombos,issues};
 }
