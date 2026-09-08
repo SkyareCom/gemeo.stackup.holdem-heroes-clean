@@ -60,7 +60,11 @@ export function cacheAiSpots(spots:PlayerDnaSpot[]){
 
 export function applyAiRuntimeBank(runtimeBank:PlayerDnaSpot[],offlineBank:PlayerDnaSpot[],aiSpots:PlayerDnaSpot[]){
   const valid=analysisReady(aiSpots);
-  if(!valid.length){runtimeBank.splice(0,runtimeBank.length,...offlineBank);return"OFFLINE" as const}
+  if(!valid.length){
+    const validatedOffline=analysisReady(offlineBank);
+    runtimeBank.splice(0,runtimeBank.length,...validatedOffline);
+    return"OFFLINE" as const;
+  }
   const unique=new Map<string,PlayerDnaSpot>();for(const spot of valid)unique.set(exactSpotFingerprint(spot),spot);
   runtimeBank.splice(0,runtimeBank.length,...unique.values());
   return"AI" as const;
