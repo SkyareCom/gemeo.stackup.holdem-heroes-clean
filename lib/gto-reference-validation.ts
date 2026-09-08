@@ -1,5 +1,6 @@
 import type {PlayerAction} from "@/data/player-dna-spots";
 
+export type SolverBenchmarkUsageRights="COMMERCIAL_AUTHORIZED"|"BENCHMARK_ONLY"|"UNKNOWN";
 export type SolverBenchmarkEvidence={
   benchmarkSource:string;
   benchmarkVersion?:string;
@@ -10,6 +11,8 @@ export type SolverBenchmarkEvidence={
   bestActionMatch:boolean;
   nashDistancePctPot:number;
   validatedAt:string;
+  usageRights:SolverBenchmarkUsageRights;
+  rightsDetail?:string;
 };
 
 export type SolverReferenceValidationInput={
@@ -43,9 +46,17 @@ export function validateCommercialSolverReference(reference:SolverReferenceValid
   if(benchmark.stateFingerprint!==reference.fingerprint)issues.push("FINGERPRINT DO BENCHMARK NÃO CORRESPONDE AO NÓ DA REFERÊNCIA.");
   if(!benchmark.comparedActions?.length)issues.push("BENCHMARK NÃO COMPÕE AÇÕES COMPARADAS.");
   if(!validDate(benchmark.validatedAt))issues.push("DATA DO BENCHMARK AUSENTE OU INVÁLIDA.");
+  if(benchmark.usageRights!=="COMMERCIAL_AUTHORIZED")issues.push("USO COMERCIAL DA REFERÊNCIA NÃO ESTÁ EXPLICITAMENTE AUTORIZADO; DADO RESTRITO A BENCHMARK/QUARENTENA.");
+  if(benchmark.usageRights==="COMMERCIAL_AUTHORIZED"&&!benchmark.rightsDetail?.trim())issues.push("DETALHE/AUDITORIA DA AUTORIZAÇÃO COMERCIAL AUSENTE.");
   if(!Number.isFinite(benchmark.maxFrequencyDeltaPct)||benchmark.maxFrequencyDeltaPct<0||benchmark.maxFrequencyDeltaPct>COMMERCIAL_GTO_THRESHOLDS.maxFrequencyDeltaPct)issues.push(`DELTA MÁXIMO DE FREQUÊNCIA EXCEDE ${COMMERCIAL_GTO_THRESHOLDS.maxFrequencyDeltaPct.toFixed(2)} P.P.`);
   if(!Number.isFinite(benchmark.maxEvDeltaBb)||benchmark.maxEvDeltaBb<0||benchmark.maxEvDeltaBb>COMMERCIAL_GTO_THRESHOLDS.maxEvDeltaBb)issues.push(`DELTA MÁXIMO DE EV EXCEDE ${COMMERCIAL_GTO_THRESHOLDS.maxEvDeltaBb.toFixed(3)} BB.`);
   if(benchmark.bestActionMatch!==true)issues.push("MELHOR AÇÃO NÃO COINCIDE COM O SOLVER DE REFERÊNCIA.");
   if(!Number.isFinite(benchmark.nashDistancePctPot)||benchmark.nashDistancePctPot<0||benchmark.nashDistancePctPot>COMMERCIAL_GTO_THRESHOLDS.maxNashDistancePctPot)issues.push(`NASH DISTANCE EXCEDE ${COMMERCIAL_GTO_THRESHOLDS.maxNashDistancePctPot.toFixed(2)}% DO POTE.`);
   return{status:issues.length?"REJECTED":"VALIDATED",issues,thresholds:COMMERCIAL_GTO_THRESHOLDS};
+}
+
+export function validateBenchmarkOnlyEvidence(reference:SolverReferenceValidationInput):SolverReferenceValidationResult{
+  const benchmark=reference.benchmark;
+  if(!benchmark)return validateCommercialSolverReference(reference);
+  return validateCommercialSolverReference({...reference,benchmark:{...benchmark,usageRights:"COMMERCIAL_AUTHORIZED",rightsDetail:benchmark.rightsDetail||"BENCHMARK_ONLY_VALIDATION_PATH"}});
 }
