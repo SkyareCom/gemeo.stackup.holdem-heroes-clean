@@ -5,6 +5,7 @@ export type AnteFormat="NONE"|"BB_ANTE"|"BB_PL";
 export type PlayerAction="FOLD"|"CHECK"|"CALL"|"BET"|"RAISE"|"ALL-IN";
 export type Score={aggression:number;discipline:number;pressure:number;passivity:number};
 export type PlayerActionHistory={position:string;action:string;value:number};
+export type PlayerRangeEntry={hand:string;weight:number};
 export type PlayerDnaSpot={
   id:string;
   mode:GameMode;
@@ -28,6 +29,8 @@ export type PlayerDnaSpot={
   payouts?:number[];
   fieldStacks?:number[];
   bounties?:number[];
+  ranges?:{hero?:PlayerRangeEntry[];villains?:Record<string,PlayerRangeEntry[]>};
+  commitments?:Record<string,number>;
 };
 
 const passive:Score={aggression:0,discipline:1,pressure:0,passivity:3};
